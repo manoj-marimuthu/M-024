@@ -1,4 +1,4 @@
-# Custom Interpreter Version : v0.2.0
+# Custom Interpreter Version : v0.2.1
 ## Table of Contents
 - [What ?](#what-)
 - [Why ?](#why-)
@@ -15,7 +15,7 @@
   - [IO Statements](#io-statements)
     - [print()](#print)
     - [input()](#input)
-  - [Type Conversion Functions](#type-conversion-functions)
+  - [Built-in and Type-Conversion Functions](#built-in-and-type-conversion-functions)
   - [Conditional Statements](#conditional-statements)
   - [While Loop](#while-loop)
   - [Functions](#functions)
@@ -117,7 +117,14 @@ print("Pi is",3.1428) # Pi is 3.1428
 ```python
 a = input("Enter Your Name:")
 ```
-## Type Conversion Functions
+## Built-in and Type-Conversion Functions
+- The interpreter provides 2 major built-in utility functions len() and type()
+```python
+a = len("I Love Interpreters !") # 21
+b = type(a) # 'NUMBER'
+```
+- The interpreter returns uppercase strings for each type (NUMBER,STRING,NONE,BOOLEAN)
+- The len() function only accepts strings, else raises a runtime error. 
 - The interpreter also provides type conversion functions such as int(),str(),bool()
 ```python
 a = int("20") # 20
@@ -147,7 +154,7 @@ while i < 10:
   i = i + 1
 ```
 ## Functions
-- The latest Feature in this version are functions that can accept parameters and can return values. Recursion is not supported ...yet.
+- The latest Feature in this version are functions that can accept parameters and can return values. Recursion is now supported.
 ```python
 fn sum(a,b):
   return a+b
@@ -157,7 +164,7 @@ fn sum(a,b):
 print(sum(10,20)) # 30
 c = sum(0,10) # 10
 ```
-- Check out the Test folder to see functions in action.
+- Check out the test folder to try functions and recursion.
 ## Errors
 - The interpreter does not support error/exception handling features...yet but it does have a neat error system that provides error type,line at
    which the error happens ,hints and Even Error types. The following are the error types in the interpreter.
