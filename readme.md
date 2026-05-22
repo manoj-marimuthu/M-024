@@ -1,34 +1,35 @@
-# Custom Programming Language 
-It is simple interpreter written from scratch in C. It is the first version of the project and has only limited features.
+# ⚙️ Interpreter V0.1.0
+  A lightweight Interpreter written entirely in C.   
+  It executes .py (could 'nt find the time to give a new name) files with many features such as variable and constant declarations,loops,condition statments,logics,comments and basic I/O.  
+# 🗂️ Project Structure 
+  ➡️ src/interpreter.c   
+  ➡️ bin/interpret.exe - main file,download and use in your project directory   
+  ➡️ test - contains sample code for some algorithms   
 
-# Features
-1) Interprets .py files and runs them
-2) Supports Integers,Strings,Booleans,Floats
-3) Supports Variable Declaration
-4) Constants are supported (with const keyword before variable name)
-5) Basic Arithmetic Operations - +,-,*,/
-6) Basic Logical Operations and,not,or
-7) printing of variables and strings (Does not support , like python)
-8) printc() prints to the terminal without newline character at the end
-9) print() prints to the terminal with addition of newline character at the end
-10) both printc() and print() take argument of a single expression type (Integers,Floats,Boolean,Strings)
-11) import other .py files using import <filename> keyword , searches files in the same project directory
-12) Memory Tracker to manage memory
-
-# Installation and Usage
-1) download interpret.exe from bin folder of this repository
-2) Paste it in your project folder
-3) run the command interpret <filepath> in your terminal (make sure the file is in the same directory as interpret.exe)
-4) For your guide, Some Basic Libraries and Files are shared in src folder of this repository
-5) All imports must stay in the same directory as interpreter.exe
-
-# Common Errors and Tips
-1) print("Name:" + name) is fine but print("Age:" + 18) causes error as the expression consists both string and int. Use separate prints.
-2) Imports never work until you place them in the same directory as interpret.exe ,because the interpreter searches imports in its own directory even though the main file is in some other directory.
-3) suggested file structure: keep all the files from interpret.exe,imports and the main python file in the same directory without sub folders. This will be corrected in version 0.0.1.
-
-# Future Plans for Version 0.0.1 
-1) Addition of more features such as conditionals,loops and even functions with recursion.
-2) Better Memory Management,Import Rules
-
-   
+# ✨ Features in v0.1.0 
+  ✅ Indentation-based syntax (Python-Like)  
+  ✅ Variable and Constant declarations  
+  ✅ Conditional statements (if,elif,else)   
+  ✅ While loops    
+  ✅ Built in functions - print(),input(),int()     
+  ✅ Arithmetic Operations (+,-,*,/,^)  
+  ✅ Logical Operations (and,or,not)   
+  ✅ Comparators ( > , < , == , >= , <= , !=)   
+  ✅ Supports Data Types - String,Integer,Float,Boolean,None    
+  ✅ Basic Memory Tracking and Handling (under hood)   
+# 🧠 Plans for Future Versions   
+  ➡️ Expand standard library  
+  ➡️ Provide Data Structures such as Lists,Dictionary   
+  ➡️ Provide Functions   
+  ➡️ Provide optional static typing   
+  # ▶️ Run Instructions for Test Programs   
+  ```bash
+  ./bin/interpret.exe test/factorial.py
+  ./bin/interpret.exe test/prime.py
+  ./bin/interpret.exe test/fibonacci.py
+```
+  # 🕓 Version History 
+    v0.1.0 (second release) 
+  # 🧑‍💻 Author 
+    Manoj K M
+    Built with C and Curiosity 💻
