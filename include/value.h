@@ -16,6 +16,7 @@ typedef struct Value{
         double numData;
         bool boolData;
     } data;
+    bool isReturnedValue;
 } Value;
 
 #endif

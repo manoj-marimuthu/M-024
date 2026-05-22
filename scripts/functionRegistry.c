@@ -7,7 +7,7 @@
 Function* functionArr[100];
 void initFunctionRegister(){
     for(int i =0;i < 100;i++){
-        arr[i] = NULL;
+        functionArr[i] = NULL;
     }
 }
 Param* createParam(char* paramName){

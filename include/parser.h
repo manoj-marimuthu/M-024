@@ -33,7 +33,10 @@ typedef enum{
     AST_FUNCTION_CALL,
     AST_RETURN,
     AST_ASSIGNMENT,
-    AST_INCLUDE
+    AST_INDEXED,
+    AST_IDENTIFIER_INDEXED,
+    AST_LEN,
+    AST_TYPE
 } astNodeType;
 
 typedef struct astNode{
@@ -55,6 +58,7 @@ typedef struct astNode{
     struct astNode* param;
     struct astNode* nextParam;
     struct astNode* astChain;
+    struct astNode* index;
     int lineCount;
     bool isConstant;
 } astNode;

@@ -8,15 +8,18 @@
 #include <variableRegistry.h>
 #include <functionRegistry.h>
 #include <math.h>
-
+#include <callStack.h>
 astNode* ast_root = NULL;
 astNode* ast_tail = NULL;
-bool isReturning = false;
-char* curFunction = NULL;
-Value functionReturn;
 
+Value makeValue(){
+    Value v;
+    v.isReturnedValue = false;
+    return v;
+}
 Value makeNone(){
     Value v;
+    v.isReturnedValue= false;
     v.type = D_NONE;
     return v;
 }
@@ -37,13 +40,56 @@ bool isTruthy(Value val){
 }
 Value evaluate(astNode* node){
    if(node->type == AST_STRING){
-     Value v;
+     Value v = makeValue();
      MemNode* strObj = createMemNode(strlen(node->data.stringData)+1);
      v.data.stringData = strObj->ptr;
      strcpy(v.data.stringData,node->data.stringData);
      v.type = D_STRING;
      return v;     
-   }else if(node->type == AST_NUMBER){
+   }
+   else if(node->type == AST_INDEXED){
+        Value v = makeValue();
+        Value index = evaluate(node->index);
+        if(strlen(node->data.stringData) <= index.data.numData){
+            error("Index out of bounds",node->lineCount,INDEXING_ERROR);
+        }
+        if(index.type != D_NUMBER){
+            error("Invalid Parameter For Indexing",node->lineCount,INDEXING_ERROR);
+        }
+        MemNode* strObj = createMemNode(3);
+        v.data.stringData = strObj->ptr;
+        if(index.data.numData != floor(index.data.numData) || index.data.numData < 0){
+            error("Index Error , Wrong Parameter (Required : Number)",node->lineCount,INDEXING_ERROR);
+        }
+        v.data.stringData[0] = node->data.stringData[(int) index.data.numData];
+        v.data.stringData[1] = '\0';
+        v.type = D_STRING;
+        return v;
+   }
+   else if(node->type == AST_IDENTIFIER_INDEXED){
+        Variable* variable = getVariable(node->data.stringData);
+        Value * var = variable->data;
+        Value index = evaluate(node->index);
+        if(strlen(var->data.stringData) <= index.data.numData){
+            error("Index out of bounds",node->lineCount,INDEXING_ERROR);
+        }
+        if(index.type != D_NUMBER){
+            error("Invalid Parameter For Indexing",node->lineCount,INDEXING_ERROR);
+        }
+        Value result;
+        if(var->type != D_STRING){
+            char errMsg[256];
+            snprintf(errMsg,sizeof(errMsg),"Indexing is only allowed for strings. Check '%s' 's type (String Required)",variable->varName);
+            error(errMsg,node->lineCount,INDEXING_ERROR);
+        }
+        result.type = D_STRING;
+        MemNode* strObj = createMemNode(3);
+        result.data.stringData = strObj->ptr;
+        result.data.stringData[0] = var->data.stringData[(int) index.data.numData];
+        result.data.stringData[1] = '\0';
+        return result;
+   }
+   else if(node->type == AST_NUMBER){
     Value v;
     v.data.numData = node->data.numData;
     v.type = D_NUMBER;
@@ -403,7 +449,6 @@ Value evaluate(astNode* node){
         *((Value*) valObj->ptr) = val;
         Variable* v = createVariable(varName,val.type,valObj);
         v->isConstant = node->isConstant;
-        v->funcName = curFunction;
         setVariable(v);
         return makeNone();
     }else if(node->type == AST_INT){
@@ -468,6 +513,36 @@ Value evaluate(astNode* node){
                 snprintf(toReturn.data.stringData,100,"%g",v.data.numData);
             }
         }
+        return toReturn;
+    }
+    else if(node->type == AST_LEN){
+        astNode* val = node->child;
+        Value inValue = evaluate(val);
+        Value toReturn;
+        if(inValue.type == D_STRING){
+            toReturn.data.numData = strlen(inValue.data.stringData);
+            toReturn.type = D_NUMBER;
+        }else{
+            error("len() does not support number/boolean/None as a valid parameter",node->lineCount,RUN_TIME_ERROR);
+        }
+        return toReturn;
+    }
+    else if(node->type == AST_TYPE){
+        astNode* val = node->child;
+        Value inValue = evaluate(val);
+        Value toReturn;
+        toReturn.type = D_STRING;
+        MemNode* strObj = createMemNode(10);
+        if(inValue.type == D_STRING){
+            strcpy(strObj->ptr,"STRING");
+        }else if(inValue.type == D_NUMBER){
+            strcpy(strObj->ptr,"NUMBER");
+        }else if(inValue.type == D_BOOLEAN){
+            strcpy(strObj->ptr,"BOOLEAN");
+        }else{
+            strcpy(strObj->ptr,"NONE");
+        }
+        toReturn.data.stringData  = strObj->ptr;
         return toReturn;
     }
     else if(node->type == AST_PRINT){
@@ -550,10 +625,11 @@ Value evaluate(astNode* node){
         Value condition = evaluate(node->child);
         while(isTruthy(condition)){
             astNode* stmt = node->thenBlock;
+            Value result;
             while(stmt){
-                evaluate(stmt);
-                if(isReturning){
-                    return makeNone();
+                result = evaluate(stmt);
+                if(result.isReturnedValue){
+                    return result;
                 }
                 stmt = stmt->thenNext;
             }
@@ -564,22 +640,27 @@ Value evaluate(astNode* node){
         Value condition = evaluate(node->child);
         if(isTruthy(condition)){
             astNode* current = node->thenBlock;
+            Value result;
             while(current != NULL){
-                evaluate(current);
-                if(isReturning){
-                    return makeNone();
+                result = evaluate(current);
+                if(result.isReturnedValue){
+                    return result;
                 }
                 current = current->thenNext;
             }
         }else{
             if(node->nextBlock){
-                evaluate(node->nextBlock);
+                Value result = evaluate(node->nextBlock);
+                if(result.isReturnedValue){
+                    return result;
+                }
             }else if(node->elseBlock != NULL){
                 astNode* current = node->elseBlock->thenBlock;
+                Value result;
                 while(current != NULL){
-                    evaluate(current);
-                    if(isReturning){
-                        return makeNone();
+                    result = evaluate(current);
+                    if(result.isReturnedValue){
+                        return result;
                     }
                     current = current->thenNext;
                 }
@@ -613,52 +694,54 @@ Value evaluate(astNode* node){
         return makeNone();
     }
     else if(node->type == AST_FUNCTION_CALL){
-        char* prevFunction = curFunction;
-        bool prevInFunction = inFunction;
-        inFunction = true;
-        curFunction = node->data.stringData;
-        Function* f = getFunction(node->data.stringData);
-        Param* function_params = f->params;
-        astNode* value_params = node->param;
-        if(node->param_length != f->param_length){
-            printf("%d , %d",node->param_length,f->param_length);
+        Value param_values_arr[node->param_length];
+        astNode* param_values = node->param;
+        Function* function = getFunction(node->data.stringData);
+        Param* params = function->params;
+        CallStackNode* callStackNode = createCallStackNode();
+        callStackNode->function = function;
+        if(function->param_length != node->param_length){
             error("Invalid Parameters, Check if all parameters are given",node->lineCount,FUNCTION_ERROR);
-        }else{
-            while(function_params != NULL && value_params != NULL){
-                char* varName = function_params->paramName;
-                Value val = evaluate(value_params);
-                MemNode* node = createMemNode(sizeof(Value));
-                *((Value*) node->ptr) = val;
-                Variable* v = createVariable(varName,val.type,node);
-                setVariable(v);
-                function_params = function_params->next;
-                value_params = value_params->nextParam;
-            }
-            astNode* stmt = f->thenBlock;
-            if(stmt == NULL){
-                error("Function cannot be empty, Check indentation and ensure function logic is present",node->lineCount,FUNCTION_ERROR);
-            }
-            Value result = makeNone();
-            while(stmt != NULL){
-                result = evaluate(stmt);
-                if(isReturning){
-                    result = functionReturn;
-                    break;
-                }
-                stmt = stmt->thenNext;
-            }    
-            isReturning = false;
-            clear_local(node->data.stringData);
-            inFunction = prevInFunction;
-            curFunction= prevFunction;
-            return result;    
         }
+        int i = 0;
+        while(param_values){
+            param_values_arr[i] = evaluate(param_values);
+            param_values = param_values->nextParam;
+            i++;
+        }
+        pushCallStackNode(callStackNode);
+        i = 0;
+        while(params){
+            char* varName = params->paramName;
+            Value val = param_values_arr[i];
+            MemNode* valObj = createMemNode(sizeof(Value));
+            *((Value*) valObj->ptr) = val;
+            Variable* v = createVariable(varName,val.type,valObj);
+            setVariable(v);
+            params = params->next;
+            i++;
+        }
+        astNode* stmt = function->thenBlock;
+        if(stmt == NULL){
+                error("Function cannot be empty, Check indentation and ensure function logic is present",node->lineCount,FUNCTION_ERROR);
+        }
+        Value result;
+        while(stmt != NULL){
+            result = evaluate(stmt);
+            if(result.isReturnedValue && result.isReturnedValue == true){
+                result.isReturnedValue = false;
+                popCallStackNode();
+                return result;
+            }
+            stmt = stmt->thenNext;
+        }
+        popCallStackNode();
+        return makeNone();
     }
     else if(node->type == AST_RETURN){
         Value v = evaluate(node->child);
-        functionReturn = v;
-        isReturning = true;
-        return functionReturn;
+        v.isReturnedValue = true;
+        return v;
     }
     return makeNone();
 }

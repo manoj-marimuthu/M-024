@@ -132,17 +132,17 @@ void line_lexer(char* line,int lineCount,Stack* stk){
                 }else if(strcmp(temp->data.strData,"while") == 0){
                     temp->type = WHILE;
                 }
-                else if(strcmp(temp->data.strData,"for") == 0){
-                    temp->type = FOR;
-                }
-                else if(strcmp(temp->data.strData,"to") == 0){
-                    temp->type = TO;
-                }
                 else if(strcmp(temp->data.strData,"int") == 0){
                     temp->type = INT;
                 }
                 else if(strcmp(temp->data.strData,"str") == 0){
                     temp->type = STR;
+                }
+                else if(strcmp(temp->data.strData,"len") == 0){
+                    temp->type = LEN;
+                }
+                else if(strcmp(temp->data.strData,"type") == 0){
+                    temp->type = TYPE;
                 }
                 else if(strcmp(temp->data.strData,"bool") == 0){
                     temp->type = BOOL;
@@ -221,6 +221,14 @@ void line_lexer(char* line,int lineCount,Stack* stk){
             }
             else if(line[i] == ')'){
                 temp->type = R_BRACK;
+                i++;
+            }
+            else if(line[i] == '['){
+                temp->type = L_SQUARE_BRACK;
+                i++;
+            }
+            else if(line[i] == ']'){
+                temp->type = R_SQUARE_BRACK;
                 i++;
             }
             else if(line[i] == '\n'){

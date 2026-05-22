@@ -21,6 +21,7 @@ astNode* createAstNode(){
     temp->elseBlock = NULL;
     temp->astChain = NULL;
     temp->param_length = 0;
+    temp->index = 0;
     temp->lineCount = current->lineCount;
     temp->param = NULL;
     temp->nextParam = NULL;
@@ -47,6 +48,18 @@ astNode* parseAtom(){
         node->data.stringData = gcObj->ptr;
         strcpy(node->data.stringData,current->data.strData);    
         consume();
+        if(current && current->type == L_SQUARE_BRACK){
+            consume();
+            astNode* indexNode = parseExpression();
+            if(current && current->type == R_SQUARE_BRACK){
+                consume();
+                node->index = indexNode;
+                node->type = AST_INDEXED;
+                return node;
+            }else{
+                error("Missing ] for indexing",current->lineCount,SYNTAX_ERROR);
+            }
+        }
         return node;
     }
     else if(current && current->type == BOOLEAN){
@@ -70,6 +83,18 @@ astNode* parseAtom(){
         node->data.stringData = gcObj->ptr;
         strcpy(node->data.stringData,current->data.strData);
         consume();
+        if(current && current->type == L_SQUARE_BRACK){
+            consume();
+            astNode* indexNode = parseExpression();
+            if(current && current->type == R_SQUARE_BRACK){
+                consume();
+                node->index = indexNode;
+                node->type = AST_IDENTIFIER_INDEXED;
+                return node;
+            }else{
+                error("Missing ] while indexing a variable",current->lineCount,SYNTAX_ERROR);
+            }
+        }
         return node;
     }
     else if(current && current->type == L_BRACK){
@@ -87,7 +112,7 @@ astNode* parseAtom(){
     else if(current && (current->type == INPUT || current->type == PRINT)){
         return parseIO();
     }
-    else if(current && (current->type == INT || current->type ==  STR || current->type == BOOL)){
+    else if(current && (current->type == INT || current->type ==  STR || current->type == BOOL || current->type == LEN || current->type == TYPE)){
         return parseTypeFunction();
     }
     else{
@@ -301,12 +326,52 @@ astNode* parseTypeFunction(){
             if(current && current->type == R_BRACK){
                 consume();
                 skipNewline();
-            return node;
+                return node;
             }else{
                 error("Missing ')' in bool() built-in function",current->lineCount,SYNTAX_ERROR);
             }
         }else{
             error("Missing '(' in bool() built-in function",current->lineCount,SYNTAX_ERROR);
+        }
+    }
+    else if(current && current->type == LEN){
+        astNode* node = createAstNode();
+        node->type = AST_LEN;
+        consume();
+        if(current && current->type == L_BRACK){
+            consume();
+            astNode* child = parseExpression();
+            node->child = child;
+            if(current && current->type == R_BRACK){
+                consume();
+                skipNewline();
+                return node;
+            }
+            else{
+                error("Missing ')' in len() built-in function",current->lineCount,SYNTAX_ERROR);
+            }
+        }else{
+            error("Missing '(' in len() built-in function",current->lineCount,SYNTAX_ERROR);
+        }
+    }
+    else if(current && current->type == TYPE){
+        astNode* node = createAstNode();
+        node->type = AST_TYPE;
+        consume();
+        if(current && current->type == L_BRACK){
+            consume();
+            astNode* child = parseExpression();
+            node->child = child;
+            if(current && current->type == R_BRACK){
+                consume();
+                skipNewline();
+                return node;
+            }
+            else{
+                error("Missing ')' in type() built-in function",current->lineCount,SYNTAX_ERROR);
+            }
+        }else{
+            error("Missing '(' in type() built-in function",current->lineCount,SYNTAX_ERROR);
         }
     }
     else{

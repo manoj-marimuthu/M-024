@@ -8,12 +8,14 @@
 #include <memoryHandler.h>
 #include <evaluate.h>
 #include <variableRegistry.h>
-
+#include <callStack.h>
 #define VERSION "V0.2.0"
 
 void interpret(char* fileName){
     int n = strlen(fileName);
     if(n > 4 && fileName[n-1] == 'p' && fileName[n-2] == 'p' && fileName[n-3] == 'a' && fileName[n-4] == '.'){
+        CallStackNode* global_frame = createCallStackNode();
+        pushCallStackNode(global_frame);
         Lexer(fileName);
         current = lexer_output;
         Parser();

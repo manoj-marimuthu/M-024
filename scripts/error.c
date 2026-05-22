@@ -64,6 +64,13 @@ void error(char* line,int lineCount,ErrorType type){
             printf(YELLOW "At line %d \n" RESET , lineCount);
         }
         printf(GREEN "Hint : Check Function Name and Whether it is already Declared or not \n" RESET);
+    }else if(type == INDEXING_ERROR){
+        printf(BOLD RED UNDERLINE "INDEXING ERROR \n" RESET);
+        printf(BLUE "%s \n",line);
+        if(lineCount >= 1){
+            printf(YELLOW "At line %d \n" RESET , lineCount);
+        }
+        printf(GREEN "Hint : Check if index >= string length, Parameter Type (string[number] is only accepted). \n" RESET);
     }
     printf(RESET);
     clean_all();
