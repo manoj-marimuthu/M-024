@@ -164,6 +164,20 @@ fn sum(a,b):
 print(sum(10,20)) # 30
 c = sum(0,10) # 10
 ```
+- Functions in this language also support complex recursive patterns and problems. Example -
+```python
+# Tower of Hanoi using Recursion
+
+fn hanoi(n,src,aux,dest):
+    if n == 1:
+        print("Move Disk 1 from",src,"to",dest)
+        return None
+    hanoi(n-1,src,dest,aux)
+    print("Move Disk",n,"from",src,"to",dest)
+    hanoi(n-1,aux,src,dest)
+
+hanoi(3,'A','B','C')
+```
 - Check out the test folder to try functions and recursion.
 ## Errors
 - The interpreter does not support error/exception handling features...yet but it does have a neat error system that provides error type,line at
