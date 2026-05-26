@@ -82,10 +82,11 @@ b = 10 % 3 # 1
 c = 2 ^ 3 # 8
 ```
 ### String Operations
-- Strings can be concatenated and replicated but not yet indexed.
+- Strings can be concatenated, replicated and indexed.
 ```python
-print("Interpreter" + " Docs") #Interpreter Docs
-print("Docs" * 3) # DocsDocsDocs
+print("Interpreter" + " Docs") # "Interpreter Docs"
+print("Docs" * 3) # "DocsDocsDocs"
+print("Docs"[0]) # "D"
 ```
 ## Logical Operations
 - supports and,or and not.
