@@ -9,7 +9,7 @@
 #include <evaluate.h>
 #include <variableRegistry.h>
 #include <callStack.h>
-#define VERSION "V0.2.0"
+#define VERSION "V0.2.1"
 
 void interpret(char* fileName){
     int n = strlen(fileName);
