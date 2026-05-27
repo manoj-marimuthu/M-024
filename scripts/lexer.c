@@ -4,9 +4,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <indentation.h>
-LexerNode* lexer_output = NULL;
-LexerNode* lexer_tail = NULL;
-Stack* stk = NULL;
+#include <globals.h>
 
 void Lexer(char* fileName){
     char line[256];
@@ -164,6 +162,9 @@ void line_lexer(char* line,int lineCount,Stack* stk){
                     temp->type = FUNCTION;
                 }else if(strcmp(temp->data.strData,"return") == 0){
                     temp->type = RETURN;
+                }
+                else if(strcmp(temp->data.strData,"load") == 0){
+                    temp->type = LOAD;
                 }
                 else{
                     temp->type = IDENTIFIER;

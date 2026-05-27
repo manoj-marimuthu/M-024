@@ -4,7 +4,7 @@
 #include <lexer.h>
 #include <string.h>
 #include <evaluate.h>
-
+#include <globals.h>
 void skipNewline(){
     while(current && current->type == NEWLINE) consume();
 }
@@ -661,7 +661,27 @@ astNode* parseCallFunction(){
     }
     return NULL;
 }
-
+astNode* parseLoad(){
+    skipNewline();
+    if(current && current->type == LOAD){
+        consume();
+        if(current->type == STRING){
+            astNode* node = createAstNode();
+            node->type = AST_LOAD;
+            MemNode* strObj = createMemNode(strlen(current->data.strData) + 1);
+            strcpy(strObj->ptr,current->data.strData);
+            node->data.stringData = strObj->ptr;
+            consume();
+            return node;
+        }
+        else{
+            error("Unidentified object located after 'load' keyword. Use a valid string which denotes a filename",current->lineCount,SYNTAX_ERROR);
+            return NULL;
+        }
+    }else{
+        return NULL;
+    }
+}
 astNode* parseBlock(){
     skipNewline();
     LexerNode* node = current;
@@ -675,6 +695,7 @@ astNode* parseBlock(){
     else if(node->type == IDENTIFIER || node->type == CONST) return parseVarDec();
     else if(node->type == FUNCTION) return parseFunction();
     else if(node->type == RETURN) return parseReturn();
+    else if(node->type == LOAD) return parseLoad();
     else{ 
         error("Undefined Statement Found While Parsing",current->lineCount,RUN_TIME_ERROR);
         return NULL;
