@@ -17,7 +17,8 @@ typedef enum{
     INDENTATION_ERROR,
     RUN_TIME_ERROR,
     FUNCTION_ERROR,
-    INDEXING_ERROR
+    INDEXING_ERROR,
+    IMPORT_ERROR
 } ErrorType;
 void error(char* line,int lineCount,ErrorType type);
 #endif

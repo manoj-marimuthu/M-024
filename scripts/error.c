@@ -72,6 +72,14 @@ void error(char* line,int lineCount,ErrorType type){
         }
         printf(GREEN "Hint : Check if index >= string length, Parameter Type (string[number] is only accepted). \n" RESET);
     }
+    else if(type == IMPORT_ERROR){
+        printf(BOLD RED UNDERLINE "IMPORT ERROR \n" RESET);
+        printf(BLUE "%s \n",line);
+        if(lineCount >= 1){
+            printf(YELLOW "At line %d \n" RESET , lineCount);
+        }
+        printf(GREEN "Hint : Check filepath (must be relative to interpret.exe and not the parent file). \n" RESET);
+    }
     printf(RESET);
     clean_all();
     exit(1);
