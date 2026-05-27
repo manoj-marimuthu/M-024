@@ -1,4 +1,4 @@
-# Custom Interpreter Version : v0.2.1
+# Custom Interpreter Version : v0.3.0
 ## Table of Contents
 - [What ?](#what-)
 - [Why ?](#why-)
@@ -19,6 +19,7 @@
   - [Conditional Statements](#conditional-statements)
   - [While Loop](#while-loop)
   - [Functions](#functions)
+  - [Imports and stdlib](#imports-and-stdlib)
   - [Errors](#errors)
 - [Final Thoughts](#final-thoughts)
 - [Author](#author)
@@ -49,6 +50,12 @@ uses a stack for tracking the indentation.
 ```fish
 ./interpret "main.app"
 ```
+- A test set is provided for development purposes (to identify features from breaking) after making code changes
+- to run the test set in windows (cmd only)
+```bash
+run_tests
+```
+- The test files are provided under the test/ folder and can be utilissed manually too for a different OS (UNIX-based) or purpose (testing only certain features)
 
 # Documentation
 This section provides the documentation for all the features supported by this interpreter version. It is advised to go through
@@ -180,6 +187,42 @@ fn hanoi(n,src,aux,dest):
 hanoi(3,'A','B','C')
 ```
 - Check out the test folder to try functions and recursion.
+## Imports and stdlib
+- The interpreter as of v0.3.0 now supports imports.
+- imports can be done using the "load" keyword followed by the filename/path.
+- The filepath is relative to the interpreter's exe file and not that of the loader.
+```python
+load "lib/math.py"
+```
+- The current standard library is limited but the upcoming versions and patches will improve them as side quests
+- Standard libraries
+  - math.app
+    - mathematics utility library
+    - Constants
+      - pi
+      - e
+      - tau
+    - functions
+      - isEven(n)
+      - isOdd(n)
+      - floor(n)
+      - ceil(n)
+      - factorial(n)
+      - dist(x1,y1,x2,y2)
+      - abs(n)
+      - gcd(a,b)
+      - lcm(a,b)
+      - copysign(a,b)
+      - rad(deg)
+      - deg(rad)
+  - tester.app 
+    - testing library for basic unit testing
+    - functions
+      - testEqual(a,b,test_name)
+      - testNotEqual(a,b,test_name)
+      - testTrue(a,test_name)
+      - testFalse(a,test_name)
+  
 ## Errors
 - The interpreter does not support error/exception handling features...yet but it does have a neat error system that provides error type,line at
    which the error happens ,hints and Even Error types. The following are the error types in the interpreter.
