@@ -42,7 +42,8 @@ typedef enum{
     CONST,
     NONE,
     RETURN,
-    FUNCTION
+    FUNCTION,
+    LOAD
 } LexerNodeType;
 
 typedef struct LexerNode
@@ -58,9 +59,6 @@ typedef struct LexerNode
     struct LexerNode* next;
 } LexerNode;
 
-LexerNode* lexer_output;
-LexerNode* lexer_tail;
-Stack* stk;
 void Lexer(char* fileName);
 void pushIntoLexerOutput(LexerNode* node);
 void line_lexer(char* line,int lineCount,Stack* stk);

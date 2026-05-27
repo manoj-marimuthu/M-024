@@ -1,0 +1,26 @@
+load 'lib/tester.app'
+
+# The following test file provides a range of test cases for
+# boolean operations such as and, or, not.
+
+# and operation
+
+testEqual(True and False,False,"Boolean 'and' test")
+testEqual("" and True,False,"String and Boolean 'and' test")
+testEqual(10 and True,True,"Number and Boolean 'and' test")
+testEqual(True and None,False,"None and Boolean 'and' test")
+
+# or operation 
+
+testEqual(True or False,True,"Boolean 'or' test")
+testEqual("" or True,True,"String and Boolean 'or' test")
+testEqual(10 or True,True,"Number and Boolean 'or' test")
+testEqual(False or None,False,"None and Boolean 'or' test")
+
+# not operation
+
+testEqual(not True,False,"Boolean 'not' test 1")
+testEqual(not False,True,"Boolean 'not' test 2")
+testEqual(not "",True,"String 'not' test")
+testEqual(not None,True,"None 'not' test")
+testEqual(not 0,True,"Number 'not' test")

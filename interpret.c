@@ -9,6 +9,9 @@
 #include <evaluate.h>
 #include <variableRegistry.h>
 #include <callStack.h>
+#include <globals.h>
+#include <imports.h>
+#include <direct.h>
 #define VERSION "V0.2.1"
 
 void interpret(char* fileName){
@@ -16,10 +19,14 @@ void interpret(char* fileName){
     if(n > 4 && fileName[n-1] == 'p' && fileName[n-2] == 'p' && fileName[n-3] == 'a' && fileName[n-4] == '.'){
         CallStackNode* global_frame = createCallStackNode();
         pushCallStackNode(global_frame);
+        Import* parent_import = create_import(fileName);
+        push_import_loading(parent_import);
         Lexer(fileName);
         current = lexer_output;
         Parser();
         Execute();
+        Import * imp = pop_import_loading();
+        push_import_loaded(imp);
     }else{
         error("File Extension Is Wrong",-1,FILE_EXTENSION_ERROR);
     }

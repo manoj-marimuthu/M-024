@@ -1,0 +1,10 @@
+load 'lib/tester.app'
+
+# This test file provides a range of test cases to check the
+# working of the len built-in function provided to the interpreter
+# directly via C. We check for only strings since len() only accepts
+# strings and no other data type
+
+testEqual(len("Hi"),2,"len() for basic string, test case 1")
+testEqual(len(""),0,"len() for empty string, test case 2")
+testEqual(len("Hello World"),11,"len() for spaced string, test case 3")

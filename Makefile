@@ -1,6 +1,6 @@
 TARGET = interpret.exe
 COMMAND = gcc -g -Wall -Iinclude
-OBJ = build/interpret.o build/memoryHandler.o build/error.o build/lexer.o build/indentation.o build/parser.o build/variableRegistry.o build/functionRegistry.o build/evaluate.o build/callStack.o
+OBJ = build/interpret.o build/memoryHandler.o build/error.o build/lexer.o build/indentation.o build/parser.o build/variableRegistry.o build/functionRegistry.o build/evaluate.o build/callStack.o build/globals.o build/imports.o
 
 $(TARGET) : $(OBJ)
 	$(COMMAND) $(OBJ) -o $(TARGET)
@@ -24,5 +24,9 @@ build/evaluate.o : scripts/evaluate.c
 	$(COMMAND) -c scripts/evaluate.c -o build/evaluate.o
 build/callStack.o : scripts/callStack.c
 	$(COMMAND) -c scripts/callStack.c -o build/callStack.o
+build/globals.o : scripts/globals.c
+	$(COMMAND) -c scripts/globals.c -o build/globals.o
+build/imports.o : scripts/imports.c
+	$(COMMAND) -c scripts/imports.c -o build/imports.o
 clean:
 	del build\*.o interpret.exe

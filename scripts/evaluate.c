@@ -9,9 +9,8 @@
 #include <functionRegistry.h>
 #include <math.h>
 #include <callStack.h>
-astNode* ast_root = NULL;
-astNode* ast_tail = NULL;
-
+#include <globals.h>
+#include <imports.h>
 Value makeValue(){
     Value v;
     v.isReturnedValue = false;
@@ -742,6 +741,13 @@ Value evaluate(astNode* node){
         Value v = evaluate(node->child);
         v.isReturnedValue = true;
         return v;
+    }else if(node->type == AST_LOAD){
+        char* fileName = node->data.stringData;
+        if(isAlreadyLoaded(fileName)) return makeNone();
+        GlobalsCopy copy = copy_state();
+        clear_states();
+        interpret(fileName);
+        restore_state(copy);
     }
     return makeNone();
 }

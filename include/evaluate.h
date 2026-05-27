@@ -6,8 +6,7 @@
 #include <stdbool.h>
 #include <memoryHandler.h>
 #include <variableRegistry.h>
-astNode* ast_root;
-astNode* ast_tail;
+
 Value evaluate(astNode* node);
 Value makeNone();
 Value makeValue();

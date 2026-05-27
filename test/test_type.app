@@ -1,0 +1,25 @@
+load 'lib/tester.app'
+
+# This test file provides a range of test cases for checking
+# the behaviour of the type() built-in function for a variety
+# of data types provided by the interpreter (Number,None,String
+# and Boolean)
+
+# test number type
+
+testEqual(type(10.1),"NUMBER","type() for number test case 1")
+testEqual(type(100),"NUMBER","type() for number test case 2")
+
+# test string type
+
+testEqual(type("Hi"),"STRING","type() for string test case 1")
+testEqual(type("I hate tests"),"STRING","type() for string test case 2")
+
+# test boolean type
+
+testEqual(type(True),"BOOLEAN","type() for boolean test case 1")
+testEqual(type(False),"BOOLEAN","type() for boolean test case 2")
+
+# test None type
+
+testEqual(type(None),"NONE","type() for NONE test case 1")
