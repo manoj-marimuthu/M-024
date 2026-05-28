@@ -201,6 +201,18 @@ Value evaluate(astNode* node){
                     }
                     v.type = D_STRING;
                 }
+                else if(right.type == D_STRING && left.type == D_NUMBER){
+                    if(left.data.numData <= 0 || floor(left.data.numData) != left.data.numData){
+                        error("Usage of String Multiplication with a ZERO/Negative number is Illegal",node->lineCount,RUN_TIME_ERROR);
+                    }
+                    MemNode* node = createMemNode(strlen(right.data.stringData) * left.data.numData + 1);
+                    v.data.stringData = (char*) node->ptr;
+                    for(int i =0;i < left.data.numData;i++){
+                        if(i == 0) strcpy(v.data.stringData,right.data.stringData);
+                        else strcat(v.data.stringData,right.data.stringData);
+                    }
+                    v.type = D_STRING;
+                }
                 else{
                     error("Incorrect Usage of '*' operator",node->lineCount,SYNTAX_ERROR);
                 }
