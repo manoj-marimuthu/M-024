@@ -31,3 +31,4 @@ testEqual("Hello World" + "!","Hello World!","String concatenation test 2")
 
 testEqual(sample_string*2,"Hello Tests !Hello Tests !","String replication test 1")
 testEqual("Hi" * 3,"HiHiHi","String replication test 2")
+testEqual(3 * "Hi","HiHiHi","String replication test 3")
