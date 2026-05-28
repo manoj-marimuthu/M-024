@@ -78,7 +78,7 @@ void error(char* line,int lineCount,ErrorType type){
         if(lineCount >= 1){
             printf(YELLOW "At line %d \n" RESET , lineCount);
         }
-        printf(GREEN "Hint : Check filepath (must be relative to interpret.exe and not the parent file). \n" RESET);
+        printf(GREEN "Hint : Check filepath (must be relative to interpret.exe and not the parent file) and check for deadlocks. \n" RESET);
     }
     printf(RESET);
     clean_all();

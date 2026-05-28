@@ -51,7 +51,7 @@ uses a stack for tracking the indentation.
 ./interpret "main.app"
 ```
 - A test set is provided for development purposes (to identify features from breaking) after making code changes
-- to run the test set in windows (cmd only)
+- to run the test set in windows (cmd script here, use powershell commands manually if needed)
 ```bash
 run_tests
 ```
@@ -238,7 +238,7 @@ load "lib/math.py"
 | INDENTATION_ERROR | Occurs when there are wrong or unnecessary indentations in blocks or main program | check indentations, specially inside blocks. Make sure all main program statements are not indented |
 | RUN_TIME_ERROR | Occurs when there is a runtime error like passing a string to int() etc | check program logic, add checks using the line number given by the interpreter |
 | FUNCTION_ERROR | Occurs when there are function related errors like reusing function names, empty functions or wrong parameters | Use the line number to identify the exact error and debug |
-
+| IMPORT_ERROR | Occurs if deadlocks exists between imports | Prevent deadlocks , do not repeat imports |
 # Future Plans
 - Adding call stacks and supporting recursion for functions
 - Building an import system and a standard library

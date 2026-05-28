@@ -27,7 +27,7 @@ void push_import_loading(Import* import){
         if(strcmp(curImport->fileName,import->fileName) == 0){
             char errMSG[100];
             snprintf(errMSG,sizeof(errMSG),"Import Deadlock detected while importing %s",import->fileName);
-            error(errMSG,-1,RUN_TIME_ERROR);
+            error(errMSG,-1,IMPORT_ERROR);
         }
         curImport = curImport->next;
     }
