@@ -130,6 +130,15 @@ void line_lexer(char* line,int lineCount,Stack* stk){
                 }else if(strcmp(temp->data.strData,"while") == 0){
                     temp->type = WHILE;
                 }
+                else if(strcmp(temp->data.strData,"for") == 0){
+                    temp->type = FOR;
+                }
+                else if(strcmp(temp->data.strData,"to") == 0){
+                    temp->type = TO;
+                }
+                else if(strcmp(temp->data.strData,"in") == 0){
+                    temp->type = IN;
+                }
                 else if(strcmp(temp->data.strData,"int") == 0){
                     temp->type = INT;
                 }

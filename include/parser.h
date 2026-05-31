@@ -37,7 +37,8 @@ typedef enum{
     AST_IDENTIFIER_INDEXED,
     AST_LEN,
     AST_TYPE,
-    AST_LOAD
+    AST_LOAD,
+    AST_FOR
 } astNodeType;
 
 typedef struct astNode{
@@ -47,7 +48,7 @@ typedef struct astNode{
         char* stringData;
         bool boolData;
         char charData;
-    }data;
+    }   data;
     int param_length;
     struct astNode* nextBlock;
     struct astNode* thenBlock;
@@ -60,6 +61,8 @@ typedef struct astNode{
     struct astNode* nextParam;
     struct astNode* astChain;
     struct astNode* index;
+    struct astNode* start_value;
+    struct astNode* end_value;
     int lineCount;
     bool isConstant;
 } astNode;

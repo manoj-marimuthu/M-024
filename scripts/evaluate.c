@@ -632,7 +632,31 @@ Value evaluate(astNode* node){
                 break;
         }
         return toReturn;
-    }else if(node->type == AST_WHILE){
+    }
+    else if(node->type == AST_FOR){
+        int end_value = evaluate(node->end_value).data.numData;
+        MemNode* varObj = createMemNode(sizeof(Variable));
+        Value val = evaluate(node->start_value);
+        val.type = D_NUMBER;
+        val.isReturnedValue = false;
+        Variable* iterator = createVariable(node->data.stringData,val.type,varObj);
+        (* iterator->data) = val;
+        setVariable(iterator);
+        for(int i = iterator->data->data.numData;i < end_value;i++){
+            astNode* stmt = node->thenBlock;
+            Value result;
+            iterator->data->data.numData++;
+            while(stmt){
+                result = evaluate(stmt);
+                if(result.isReturnedValue){
+                    return result;
+                }
+                stmt = stmt->thenNext;
+            }
+        }
+        return makeNone();
+    }
+    else if(node->type == AST_WHILE){
         Value condition = evaluate(node->child);
         while(isTruthy(condition)){
             astNode* stmt = node->thenBlock;
