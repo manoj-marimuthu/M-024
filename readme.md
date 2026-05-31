@@ -17,7 +17,7 @@
     - [input()](#input)
   - [Built-in and Type-Conversion Functions](#built-in-and-type-conversion-functions)
   - [Conditional Statements](#conditional-statements)
-  - [While Loop](#while-loop)
+  - [Loops](#loops)
   - [Functions](#functions)
   - [Imports and stdlib](#imports-and-stdlib)
   - [Errors](#errors)
@@ -153,13 +153,19 @@ elif a < b:
 else:
   print(a,"is equal to",b) 
 ```
-## While Loop
-- The interpreter supports while and nested while loops.Every Statement under these must be indented appropriately.
+## Loops
+- The interpreter supports while loop, for loop and nested loops.Every Statement under these must be indented appropriately. The for loop feature is currently under construction for further development 
+due to poor code clarity and to prevent bugs.
 ```python
 i = 1
 while i < 10:
   print(i * "*")
   i = i + 1
+```
+- Example for 'for loop' :
+```python
+for i = 0 to 10:
+  print(i)
 ```
 ## Functions
 - The latest Feature in this version are functions that can accept parameters and can return values. Recursion is now supported.
