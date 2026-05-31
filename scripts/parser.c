@@ -5,6 +5,7 @@
 #include <string.h>
 #include <evaluate.h>
 #include <globals.h>
+#include <variableRegistry.h>
 void skipNewline(){
     while(current && current->type == NEWLINE) consume();
 }
@@ -123,7 +124,7 @@ astNode* parseAtom(){
 
 astNode* parseExponent(){
     astNode* lhs = parseAtom();
-    while(current != NULL && current->type == OPERATOR && (current->data.charData == '^')){
+    while(current != NULL && (current->type != TO && current->type != R_BRACK && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && current->type == OPERATOR && (current->data.charData == '^')){
         astNode* parent = createAstNode();
         parent->data.charData = '^';
         parent->type = AST_OPERATOR;
@@ -137,7 +138,7 @@ astNode* parseExponent(){
 }
 astNode* parseAddSub(){
     astNode* lhs = parseMulDivMod();
-    while(current != NULL && (current->type != R_BRACK && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && current->type == OPERATOR && (current->data.charData == '+' || current->data.charData == '-')){
+    while(current != NULL && (current->type != TO && current->type != R_BRACK && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && current->type == OPERATOR && (current->data.charData == '+' || current->data.charData == '-')){
         astNode* parent = createAstNode();
         parent->type = AST_OPERATOR;
         parent->data.charData = current->data.charData;
@@ -152,7 +153,7 @@ astNode* parseAddSub(){
 astNode* parseMulDivMod(){
     astNode* lhs = parseExponent();
     if(lhs == NULL) error("Undefined Error While Evaluating Expression",current->lineCount,RUN_TIME_ERROR);
-    while(current != NULL && (current->type != R_BRACK && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && current->type == OPERATOR && (current->data.charData == '*' || current->data.charData == '/' || current->data.charData == '%')){
+    while(current != NULL && (current->type != TO && current->type != R_BRACK && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && current->type == OPERATOR && (current->data.charData == '*' || current->data.charData == '/' || current->data.charData == '%')){
         astNode* parent = createAstNode();
         parent->type = AST_OPERATOR;
         parent->data.charData = current->data.charData;
@@ -169,7 +170,7 @@ astNode* parseMulDivMod(){
 astNode* parseComparator(){
     astNode* lhs = parseAddSub();
     if(lhs == NULL) error("Unexpected Error While Parsing Comparators",current->lineCount,RUN_TIME_ERROR);
-    while(current != NULL && (current->type != R_BRACK && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && (current->type == EQ || current->type == NEQ || current->type == GT || current->type == LT || current->type == GEQ || current->type == LEQ)){
+    while(current != NULL && (current->type != TO && current->type != R_BRACK && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && (current->type == EQ || current->type == NEQ || current->type == GT || current->type == LT || current->type == GEQ || current->type == LEQ)){
         astNode* parent = createAstNode();
         switch(current->type){
             case EQ:parent->type = AST_EQ;break;
@@ -192,7 +193,7 @@ astNode* parseComparator(){
 astNode* parseAndOr(){
     astNode* lhs = parseComparator();
     if(lhs == NULL) error("Unexpected Error While Parsing",lhs->lineCount,RUN_TIME_ERROR);
-    while(current != NULL && (current->type != R_BRACK && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && (current->type == AND || current->type == OR)){
+    while(current != NULL && (current->type != TO && current->type != R_BRACK && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && (current->type == AND || current->type == OR)){
         astNode* parent=  createAstNode();
         if(current->type == AND) parent->type = AST_AND;
         else parent->type = AST_OR;
@@ -442,14 +443,76 @@ astNode* parseLoop(){
         if(current && current->type != DEDENT){
             error("Indentation Does Not End Properly",current->lineCount,INDENTATION_ERROR);
         }
-        
         consume();
         whileNode->thenBlock = head;
         return whileNode;
     }
-    else{
-        return NULL;
+    else if(current && current->type == FOR){
+        consume();
+        if(current && current->type == IDENTIFIER){
+            char* varName = current->data.strData;
+            consume();
+            if(current && current->type == EQUALS){
+                // for loop for a defined range
+                consume();
+                astNode* start_value = parseExpression();
+                if(current && current->type  == TO){
+                    consume();
+                    astNode* end_value = parseExpression();
+                    if(current && current->type == COLON){
+                        consume();
+                        skipNewline();
+                        if(current && current->type == INDENT){
+                            consume();
+                            astNode* node = createAstNode();
+                            node->type = AST_FOR;
+                            MemNode* strObj = createMemNode(strlen(varName) + 1);
+                            strcpy(strObj->ptr,varName);
+                            node->data.stringData = varName;
+                            astNode* head = NULL;
+                            astNode* tail = NULL;
+                            while(current && current->type != DEDENT){
+                                astNode* stmt = parseBlock();
+                                if(head == NULL){
+                                    head = stmt;
+                                    tail = stmt;
+                                }else{
+                                    tail->thenNext = stmt;
+                                    tail = stmt;
+                                }
+                                skipNewline();
+                            }
+                            if(current && current->type != DEDENT){
+                                error("Indentation Does Not End Properly",current->lineCount,INDENTATION_ERROR);
+                            }
+                            consume();
+                            skipNewline();
+                            node->thenBlock = head;
+                            node->start_value = start_value;
+                            node->end_value = end_value;
+                            return node;
+                        }else{
+                            error("Indentation not found for 'for loop'",current->lineCount,SYNTAX_ERROR);
+                        }
+                    }else{
+                        error("invalid syntax , ':' (colon) required in the for loop",current->lineCount,SYNTAX_ERROR);
+                    }
+                }else{
+                    error("invalid syntax for 'for loop', requires range end",current->lineCount,SYNTAX_ERROR);
+                }
+
+            }else if(current && current->type == IN){
+                // for loop for a string
+                consume();
+            }else{
+                error("for loop requires '=' for number ranges or 'in' for string traversal to work",current->lineCount,SYNTAX_ERROR);
+            }
+        }else{
+            error("for loop requires an identifier (variable)",current->lineCount,SYNTAX_ERROR);
+            return NULL;
+        }
     }
+    return NULL;
 }
 
 astNode* parseIf(){
@@ -690,7 +753,7 @@ astNode* parseBlock(){
     }
     if(node->type == PRINT  || node->type == INPUT) return parseIO();
     else if(node->type == IF) return parseIf();
-    else if(node->type == WHILE) return parseLoop();
+    else if(node->type == WHILE || node->type == FOR) return parseLoop();
     else if(node->type == IDENTIFIER && node->next->type == L_BRACK) return parseCallFunction();
     else if(node->type == IDENTIFIER || node->type == CONST) return parseVarDec();
     else if(node->type == FUNCTION) return parseFunction();

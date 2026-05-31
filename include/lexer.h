@@ -43,7 +43,10 @@ typedef enum{
     NONE,
     RETURN,
     FUNCTION,
-    LOAD
+    LOAD,
+    FOR,
+    TO,
+    IN
 } LexerNodeType;
 
 typedef struct LexerNode
