@@ -13,6 +13,7 @@ typedef enum{
     AST_INPUT,
     AST_OPERATOR,
     AST_AND,
+    AST_IN,
     AST_NONE,
     AST_OR,
     AST_NOT,

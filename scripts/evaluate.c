@@ -311,6 +311,24 @@ Value evaluate(astNode* node){
         v.data.boolData = !isTruthy(child);
         return v;
     }
+    else if(node->type == AST_IN){
+        Value rhs = evaluate(node->right);
+        Value lhs = evaluate(node->left);
+        Value v;
+        v.type = D_BOOLEAN;
+        if(rhs.type != D_STRING){
+            error("'in' operator requires a string in the right-hand side",current->lineCount,RUN_TIME_ERROR);
+        }
+        if(lhs.type != D_STRING){
+            error("'in' operator requires a string in the left-hand side",current->lineCount,RUN_TIME_ERROR);
+        }
+        if(strstr(rhs.data.stringData,lhs.data.stringData) != NULL){
+            v.data.boolData = true;
+        }else{
+            v.data.boolData = false;
+        }
+        return v;
+    }
     else if(node->type == AST_GT){
         Value left = evaluate(node->left);
         Value right = evaluate(node->right);

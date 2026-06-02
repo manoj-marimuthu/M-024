@@ -205,7 +205,19 @@ astNode* parseAndOr(){
     }
     return lhs;
 }
-
+astNode* parseIn(){
+    astNode* lhs = parseAndOr();
+    if(current && current->type == IN){
+        consume();
+        astNode* rhs = parseAndOr();
+        astNode* in_node = createAstNode();
+        in_node->left = lhs;
+        in_node->right = rhs;
+        in_node->type = AST_IN;
+        return in_node;
+    }
+    return lhs;
+}
 astNode* parseNot(){
     if(current && current->type == NOT){
         astNode* parent = createAstNode();
@@ -215,7 +227,7 @@ astNode* parseNot(){
         parent->child = child;
         return parent;
     }
-        return parseAndOr();
+    return parseIn();
 }
 
 astNode* parseExpression(){

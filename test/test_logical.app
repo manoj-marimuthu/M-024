@@ -24,3 +24,9 @@ testEqual(not False,True,"Boolean 'not' test 2")
 testEqual(not "",True,"String 'not' test")
 testEqual(not None,True,"None 'not' test")
 testEqual(not 0,True,"Number 'not' test")
+
+# in operation
+
+testTrue("he" in "hello world","'in' operator test 1")
+testTrue("interpret" in "interpreter","'in' operator test 2")
+testFalse("e" in "abc","'in' operator test 3")
