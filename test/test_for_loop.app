@@ -1,9 +1,44 @@
-for i = 0 to 10:
-    print(i)
+load 'lib/tester.app'
 
-for char in 'hello':
-    print(char)
-s = 'my sample string'
+# The following test file tests the for loop feature for
+# the different cases such as integer range looping and
+# string looping or even looping with variables with ranges
+# or strings (like for i in "sample" or for i in <start,end>)
 
+# test integer range looping with no skip
+
+s = 0
+for i in <1,10>: # loop pattern = 1 -> 2 -> ... -> 9
+    s = s + i
+testEqual(s,45,"Basic for loop test with no skip")
+
+s = 0
+for i in <1,10,2>: # loop pattern = 1 -> 3 -> 5 -> 7 -> 9
+    s = s + i
+testEqual(s,25,"Basic for loop test with positive skip")
+
+s = 0
+for i in <10,1,(0-2)>: # loop pattern = 10 -> 8 -> 6 -> 4 -> 2
+    s = s + i
+testEqual(s,30,"Basic for loop test with negative skip")
+
+s = 0
+range_start = 1
+range_end = 10
+range_skip = 2
+for i in <range_start,range_end,range_skip>:
+    s = s + i
+testEqual(s,25,"Basic for loop test with variables holding range values")
+
+# test string looping
+
+s = ''
+for char in "sample string":
+    s = s + char
+testEqual(s,"sample string","Basic for loop for string traversal test (with string literal)")
+
+s = 'hello'
+t = ''
 for char in s:
-    print(char)
+    t = t + char
+testEqual(t,s,"Basic for loop for string traversal test (with string variable)")

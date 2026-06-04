@@ -62,10 +62,13 @@ typedef struct astNode{
     struct astNode* nextParam;
     struct astNode* astChain;
     struct astNode* index;
-    struct astNode* start_value;
-    struct astNode* end_value;
+    struct astNode* range_start;
+    struct astNode* range_end;
+    struct astNode* range_skip;
     int lineCount;
     bool isConstant;
+    bool isStringLoop;
+    bool isVariableTraversal;
 } astNode;
 
 astNode* createAstNode();
@@ -77,7 +80,8 @@ astNode* parseCallFunction();
 astNode* parseParameters();
 astNode* parseReturn();
 astNode* parseIf();
-astNode* parseLoop();
+astNode* parseWhileLoop();
+astNode* parseForLoop();
 astNode* parseVarDec();
 astNode* parseIO();
 astNode* parseTypeFunction();

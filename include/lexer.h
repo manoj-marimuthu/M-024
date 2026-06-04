@@ -2,7 +2,8 @@
 #define LEXER_H
 #include <indentation.h>
 #include <stdbool.h>
-typedef enum{
+
+typedef enum {
     INCLUDE,
     STRING,
     NUMBER,
@@ -45,7 +46,6 @@ typedef enum{
     FUNCTION,
     LOAD,
     FOR,
-    TO,
     IN
 } LexerNodeType;
 
