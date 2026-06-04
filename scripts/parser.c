@@ -27,6 +27,8 @@ astNode* createAstNode(){
     temp->param = NULL;
     temp->nextParam = NULL;
     temp->isConstant = false;
+    temp->isStringLoop = false;
+    temp->isVariableTraversal = false;
     return temp;
 }
 void consume(){
@@ -35,6 +37,7 @@ void consume(){
     }
 }
 astNode* parseAtom(){
+    skipNewline();
     if(current && current->type == NUMBER){
         astNode* node = createAstNode();
         node->type = AST_NUMBER;
@@ -47,7 +50,7 @@ astNode* parseAtom(){
         node->type = AST_STRING;
         MemNode* gcObj = createMemNode(strlen(current->data.strData)+1);
         node->data.stringData = gcObj->ptr;
-        strcpy(node->data.stringData,current->data.strData);    
+        strcpy(node->data.stringData,current->data.strData);
         consume();
         if(current && current->type == L_SQUARE_BRACK){
             consume();
@@ -117,14 +120,14 @@ astNode* parseAtom(){
         return parseTypeFunction();
     }
     else{
-        error("Undefined Error While Parsing (Check Indentations/Logic)\n",current->lineCount,RUN_TIME_ERROR);
+        error("Undefined error while parsing (Check Indentations / Syntax)\n",current->lineCount,RUN_TIME_ERROR);
         return NULL;
     }
 }
 
 astNode* parseExponent(){
     astNode* lhs = parseAtom();
-    while(current != NULL && (current->type != TO && current->type != R_BRACK && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && current->type == OPERATOR && (current->data.charData == '^')){
+    while(current != NULL && ( current->type != R_BRACK && current->type != GT && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE && current->type != COLON) && current->type == OPERATOR && (current->data.charData == '^')){
         astNode* parent = createAstNode();
         parent->data.charData = '^';
         parent->type = AST_OPERATOR;
@@ -138,7 +141,7 @@ astNode* parseExponent(){
 }
 astNode* parseAddSub(){
     astNode* lhs = parseMulDivMod();
-    while(current != NULL && (current->type != TO && current->type != R_BRACK && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && current->type == OPERATOR && (current->data.charData == '+' || current->data.charData == '-')){
+    while(current != NULL && ( current->type != R_BRACK && current->type != GT && current->type != COLON && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && current->type == OPERATOR && (current->data.charData == '+' || current->data.charData == '-')){
         astNode* parent = createAstNode();
         parent->type = AST_OPERATOR;
         parent->data.charData = current->data.charData;
@@ -153,7 +156,7 @@ astNode* parseAddSub(){
 astNode* parseMulDivMod(){
     astNode* lhs = parseExponent();
     if(lhs == NULL) error("Undefined Error While Evaluating Expression",current->lineCount,RUN_TIME_ERROR);
-    while(current != NULL && (current->type != TO && current->type != R_BRACK && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && current->type == OPERATOR && (current->data.charData == '*' || current->data.charData == '/' || current->data.charData == '%')){
+    while(current != NULL && ( current->type != R_BRACK && current->type != GT && current->type != COLON && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && current->type == OPERATOR && (current->data.charData == '*' || current->data.charData == '/' || current->data.charData == '%')){
         astNode* parent = createAstNode();
         parent->type = AST_OPERATOR;
         parent->data.charData = current->data.charData;
@@ -170,7 +173,7 @@ astNode* parseMulDivMod(){
 astNode* parseComparator(){
     astNode* lhs = parseAddSub();
     if(lhs == NULL) error("Unexpected Error While Parsing Comparators",current->lineCount,RUN_TIME_ERROR);
-    while(current != NULL && (current->type != TO && current->type != R_BRACK && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && (current->type == EQ || current->type == NEQ || current->type == GT || current->type == LT || current->type == GEQ || current->type == LEQ)){
+    while(current != NULL && ( current->type != R_BRACK && current->type != GT && current->type != COLON && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && (current->type == EQ || current->type == NEQ || current->type != GT || current->type == LT || current->type == GEQ || current->type == LEQ)){
         astNode* parent = createAstNode();
         switch(current->type){
             case EQ:parent->type = AST_EQ;break;
@@ -193,7 +196,7 @@ astNode* parseComparator(){
 astNode* parseAndOr(){
     astNode* lhs = parseComparator();
     if(lhs == NULL) error("Unexpected Error While Parsing",lhs->lineCount,RUN_TIME_ERROR);
-    while(current != NULL && (current->type != TO && current->type != R_BRACK && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && (current->type == AND || current->type == OR)){
+    while(current != NULL && ( current->type != R_BRACK && current->type != GT && current->type != COLON && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && (current->type == AND || current->type == OR)){
         astNode* parent=  createAstNode();
         if(current->type == AND) parent->type = AST_AND;
         else parent->type = AST_OR;
@@ -422,7 +425,7 @@ astNode* parseVarDec(){
     }
 }
 
-astNode* parseLoop(){
+astNode* parseWhileLoop(){
     if(current && current->type == WHILE){
         consume();
         astNode* whileNode = createAstNode();
@@ -459,69 +462,136 @@ astNode* parseLoop(){
         whileNode->thenBlock = head;
         return whileNode;
     }
-    else if(current && current->type == FOR){
+    return NULL;
+}
+
+astNode* parseForLoop(){
+    if(current && current->type == FOR){
         consume();
+        char* varName;
         if(current && current->type == IDENTIFIER){
-            char* varName = current->data.strData;
+            MemNode* varNameObj = createMemNode(strlen(current->data.strData) + 1);
+            strcpy(varNameObj->ptr,current->data.strData);
+            varName = varNameObj->ptr;
             consume();
-            if(current && current->type == EQUALS){
-                // for loop for a defined range
+        }else{
+            error("For loop itertor variable required",current->lineCount,SYNTAX_ERROR);
+            return NULL;
+        }
+        if(current  && current->type == IN){
+            consume();
+            if(current && current->type == LT){
                 consume();
-                astNode* start_value = parseExpression();
-                if(current && current->type  == TO){
-                    consume();
-                    astNode* end_value = parseExpression();
-                    if(current && current->type == COLON){
+                // for loop with number ranges
+                if(current){
+                    astNode* range_start = parseExpression();
+                    if(current && current->type == COMMA){
                         consume();
-                        skipNewline();
-                        if(current && current->type == INDENT){
+                        astNode* range_end = parseExpression();
+                        astNode* range_skip;
+                        if(current && current->type == COMMA){
                             consume();
-                            astNode* node = createAstNode();
-                            node->type = AST_FOR;
-                            MemNode* strObj = createMemNode(strlen(varName) + 1);
-                            strcpy(strObj->ptr,varName);
-                            node->data.stringData = varName;
-                            astNode* head = NULL;
-                            astNode* tail = NULL;
-                            while(current && current->type != DEDENT){
-                                astNode* stmt = parseBlock();
-                                if(head == NULL){
-                                    head = stmt;
-                                    tail = stmt;
-                                }else{
-                                    tail->thenNext = stmt;
-                                    tail = stmt;
-                                }
-                                skipNewline();
+                            range_skip = parseExpression();
+                            if(current && current->type == GT){
+                                consume();
+                            }else{
+                                error("Missing a '>' for the for loop",current->lineCount,SYNTAX_ERROR);
                             }
-                            if(current && current->type != DEDENT){
-                                error("Indentation Does Not End Properly",current->lineCount,INDENTATION_ERROR);
-                            }
+                        }else if(current && current->type == GT){
+                            consume();
+                            range_skip = createAstNode();
+                            range_skip->type = AST_NUMBER;
+                            range_skip->data.numData = 1;
+                        }
+                        else{
+                            error("Missing a '>' for the for loop",current->lineCount,SYNTAX_ERROR);
+                        }
+                        if(current && current->type == COLON){
                             consume();
                             skipNewline();
-                            node->thenBlock = head;
-                            node->start_value = start_value;
-                            node->end_value = end_value;
-                            return node;
+                            if(current && current->type == INDENT){
+                                consume();
+                                astNode* node = createAstNode();
+                                node->type = AST_FOR;
+                                node->range_start = range_start;
+                                node->range_end = range_end;
+                                node->range_skip = range_skip;
+                                astNode* head = NULL;
+                                astNode* tail = NULL;
+                                while(current && current->type != DEDENT){
+                                    astNode* statement = parseBlock();
+                                    if(head == NULL){
+                                        head = statement;
+                                        tail = statement;
+                                    }else{
+                                        tail->thenNext = statement;
+                                        tail = statement;
+                                    }
+                                    skipNewline();
+                                }
+                                if(current && current->type == DEDENT){
+                                    consume();
+                                }
+                                node->thenBlock = head;
+                                node->data.stringData = varName;
+                                return node;
+                            }else{
+                                error("Missing a proper indentation",current->lineCount,INDENTATION_ERROR);
+                            }
                         }else{
-                            error("Indentation not found for 'for loop'",current->lineCount,SYNTAX_ERROR);
+                            error("Missing a ':' for the for loop (required)",current->lineCount,SYNTAX_ERROR);
                         }
                     }else{
-                        error("invalid syntax , ':' (colon) required in the for loop",current->lineCount,SYNTAX_ERROR);
+                        error("Missing a comma or a end range value for the for loop",current->lineCount,RUN_TIME_ERROR);
+                    }
+                }
+            }else if(current && (current->type == IDENTIFIER || current->type == STRING)){
+                // for loop with strings or identifiers (variables or constants) that hold a string
+                bool isVariable = false;
+                if(current && current->type == IDENTIFIER){
+                    isVariable = true;
+                }
+                astNode* stringToTraverse = parseExpression();
+                if(current && current->type == COLON){
+                    consume();
+                    skipNewline();
+                    if(current && current->type == INDENT){
+                        consume();
+                        astNode* node = createAstNode();
+                        node->type = AST_FOR;
+                        astNode* head = NULL;
+                        astNode* tail = NULL;
+                        while(current && current->type != DEDENT){
+                            astNode* statement = parseBlock();
+                            if(head == NULL){
+                                head = statement;
+                                tail = statement;
+                            }else{
+                                tail->thenNext = statement;
+                                tail = statement;
+                            }
+                            skipNewline();
+                        }
+                        if(current && current->type == DEDENT){
+                            consume();
+                        }
+                        node->thenBlock = head;
+                        node->data.stringData = varName;
+                        node->child = stringToTraverse;
+                        node->isVariableTraversal = isVariable;
+                        node->isStringLoop = true;
+                        return node;
+                    }else{
+                        error("Missing a proper indentation",current->lineCount,INDENTATION_ERROR);
                     }
                 }else{
-                    error("invalid syntax for 'for loop', requires range end",current->lineCount,SYNTAX_ERROR);
+                   error("Missing a ':' for the for loop (required)",current->lineCount,SYNTAX_ERROR);
                 }
-
-            }else if(current && current->type == IN){
-                // for loop for a string
-                consume();
             }else{
-                error("for loop requires '=' for number ranges or 'in' for string traversal to work",current->lineCount,SYNTAX_ERROR);
+                error("For loops require either an integer range or a string or a variable/constant holding a string (refer documentation)",current->lineCount,RUN_TIME_ERROR);
             }
         }else{
-            error("for loop requires an identifier (variable)",current->lineCount,SYNTAX_ERROR);
-            return NULL;
+            error("For loops require the 'in' operator",current->lineCount,SYNTAX_ERROR);
         }
     }
     return NULL;
@@ -765,7 +835,8 @@ astNode* parseBlock(){
     }
     if(node->type == PRINT  || node->type == INPUT) return parseIO();
     else if(node->type == IF) return parseIf();
-    else if(node->type == WHILE || node->type == FOR) return parseLoop();
+    else if(node->type == WHILE) return parseWhileLoop();
+    else if(node->type == FOR) return parseForLoop();
     else if(node->type == IDENTIFIER && node->next->type == L_BRACK) return parseCallFunction();
     else if(node->type == IDENTIFIER || node->type == CONST) return parseVarDec();
     else if(node->type == FUNCTION) return parseFunction();
