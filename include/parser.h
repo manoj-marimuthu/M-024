@@ -39,7 +39,9 @@ typedef enum{
     AST_LEN,
     AST_TYPE,
     AST_LOAD,
-    AST_FOR
+    AST_FOR,
+    AST_UPLUS,
+    AST_UMINUS
 } astNodeType;
 
 typedef struct astNode{
@@ -86,6 +88,7 @@ astNode* parseNot();
 astNode* parseAndOr();
 astNode* parseComparator();
 astNode* parseAddSub();
+astNode* parseUnary();
 astNode* parseMulDivMod();
 astNode* parseAtom();
 void Parser();

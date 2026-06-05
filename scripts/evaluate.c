@@ -100,6 +100,14 @@ Value evaluate(astNode* node){
     v.type = D_BOOLEAN;
     return v;
    }
+   else if(node->type == AST_UPLUS){
+        Value v = evaluate(node->child);
+        return v; 
+   }else if(node->type == AST_UMINUS){
+        Value v = evaluate(node->child);
+        v.data.numData = -v.data.numData;
+        return v;
+   }
    else if(node->type == AST_IDENTIFIER){
         Variable* variable = getVariable(node->data.stringData);
         Value * var = variable->data;
@@ -485,7 +493,7 @@ Value evaluate(astNode* node){
         Value toReturn;
         toReturn.type = D_NUMBER;
         if(val.type == D_NUMBER ){
-            toReturn.data.numData = val.data.numData;
+            toReturn.data.numData = (int) val.data.numData;
         }else if(val.type == D_BOOLEAN){
             toReturn.data.numData = val.data.boolData;
         }

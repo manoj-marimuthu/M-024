@@ -9,13 +9,20 @@ fn testEqual(a,b,test_name):
     if a == b:
         log_success(test_name)
     else:
-        log_failure(test_name,a,b)
+        log_failure(test_name,b,a)
+
+fn testAlmostEqual(a,b,test_name):
+    tolerance = 0.01
+    if abs(a - b) < tolerance:
+        log_success(test_name)
+    else:
+        log_failure(test_name + "(possible due to precision)",b,a)
 
 fn testNotEqual(a,b,test_name):
     if a != b:
         log_success(test_name)
     else:
-        log_failure(test_name,a,b)
+        log_failure(test_name,b,a)
 
 fn testTrue(a,test_name):
     if a:

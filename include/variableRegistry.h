@@ -17,5 +17,4 @@ Variable* createVariable(char* varName,DataType type,MemNode* obj);
 unsigned int hash(char* varName);
 void setVariable(Variable* v);
 Variable* getVariable(char* varName);
-void removeVariable(char* varName);
 #endif

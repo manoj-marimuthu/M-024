@@ -15,7 +15,6 @@ testTrue(isEven(20),"Basic even test 1")
 testFalse(isEven(21),"Basic even test 2")
 
 # floor() tests
-
 testEqual(floor(10.5),10,"Basic floor() test 1")
 testEqual(floor(12.3),12,"Basic floor() test 2")
 
@@ -31,13 +30,13 @@ testEqual(factorial(6),720,"Basic factorial() test 2")
 
 # dist() tests
 
-testEqual(dist(2,2,2,2),0,"Basic dist() test 1")
-testEqual(dist(2,2,1,1),1.41421,"Basic dist() test 2")
+testAlmostEqual(dist(2,2,2,2),0,"Basic dist() test 1")
+testAlmostEqual(dist(2,2,1,1),1.41421,"Basic dist() test 2")
 
 # abs() tests
 
 testEqual(abs(1),1,"Basic abs() test 1")
-testEqual(abs(0-1),1,"Basic abs() test 2")
+testEqual(abs(-1),1,"Basic abs() test 2")
 
 # gcd() tests
 
@@ -46,10 +45,10 @@ testEqual(gcd(2,4),2,"Basic gcd() test 2")
 
 # lcm() tests
 
-testEqual(lcm(10,2),10,"Basci lcm() test 1")
+testEqual(lcm(10,2),10,"Basic lcm() test 1")
 testEqual(lcm(20,30),60,"Basic lcm() test 2")
 
 # copysign() tests
 
 testEqual(copysign(9,1),9,"Basic copysign() test 1")
-testEqual(copysign(8,(0-1)),(0-8),"Basic copysign() test 2")
+testEqual(copysign(8,-1),-8,"Basic copysign() test 2")

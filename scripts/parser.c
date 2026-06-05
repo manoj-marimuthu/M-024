@@ -121,15 +121,30 @@ astNode* parseAtom(){
         return NULL;
     }
 }
-
+astNode* parseUnary(){
+    if(current && current->type == OPERATOR && (current->data.charData == '+' || current->data.charData == '-')){
+        astNode* node = createAstNode();
+        if(current->data.charData == '+'){
+            consume();
+            node->type = AST_UPLUS;
+            node->child = parseAtom();
+        }else{
+            consume();
+            node->type = AST_UMINUS;
+            node->child = parseAtom();  
+        }
+        return node;
+    }
+    return parseAtom();
+}
 astNode* parseExponent(){
-    astNode* lhs = parseAtom();
+    astNode* lhs = parseUnary();
     while(current != NULL && (current->type != TO && current->type != R_BRACK && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && current->type == OPERATOR && (current->data.charData == '^')){
         astNode* parent = createAstNode();
         parent->data.charData = '^';
         parent->type = AST_OPERATOR;
         consume();
-        astNode* rhs = parseAtom();
+        astNode* rhs = parseUnary();
         parent->left = lhs;
         parent->right = rhs;
         lhs = parent;
@@ -726,6 +741,7 @@ astNode* parseCallFunction(){
             node->param = head;
             if(current && current->type == R_BRACK){
                 consume();
+                skipNewline();
                 return node;
             }else{
                 error("Call Function is Missing ')'",current->lineCount,SYNTAX_ERROR);

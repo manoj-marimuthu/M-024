@@ -15,6 +15,7 @@ typedef struct Function{
     int param_length;
     struct Function* next;
 } Function;
+
 Function* functionArr[100];
 void initFunctionRegister();
 Param* createParam(char* paramName);
