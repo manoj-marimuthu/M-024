@@ -660,25 +660,86 @@ Value evaluate(astNode* node){
         return toReturn;
     }
     else if(node->type == AST_FOR){
-        int end_value = evaluate(node->end_value).data.numData;
-        MemNode* varObj = createMemNode(sizeof(Variable));
-        Value val = evaluate(node->start_value);
-        val.type = D_NUMBER;
-        val.isReturnedValue = false;
-        Variable* iterator = createVariable(node->data.stringData,val.type,varObj);
-        (* iterator->data) = val;
-        setVariable(iterator);
-        for(int i = iterator->data->data.numData;i < end_value;i++){
-            astNode* stmt = node->thenBlock;
-            Value result;
-            iterator->data->data.numData++;
-            while(stmt){
-                result = evaluate(stmt);
-                if(result.isReturnedValue){
-                    return result;
+        if(node->isStringLoop){
+            Value stringToTraverse;
+            if(node->isVariableTraversal){
+                Value variable_rhs = evaluate(node->child);
+                if(variable_rhs.type != D_STRING){
+                    error("For Loop requires a string object to traverse",node->lineCount,RUN_TIME_ERROR);
                 }
-                stmt = stmt->thenNext;
+                stringToTraverse = variable_rhs;
+            }else{
+                stringToTraverse = evaluate(node->child);
             }
+            int stringLength = strlen(stringToTraverse.data.stringData);
+            if(stringToTraverse.type != D_STRING){
+                error("For Loop requires a string object to traverse",node->lineCount,RUN_TIME_ERROR);
+            }
+            MemNode* iteratorMemObj = createMemNode(sizeof(Variable));
+            Value v;
+            v.type = D_STRING;
+            v.data.stringData = createMemNode(2)->ptr;
+            v.data.stringData[0] = stringToTraverse.data.stringData[0];
+            v.data.stringData[1] = '\0';
+            Variable* iterator = createVariable(node->data.stringData,D_STRING,iteratorMemObj);
+            *(iterator->data) = v;
+            setVariable(iterator);
+            // run the for loop
+            Value result;
+            astNode* stmt;
+            for(int i = 0;i < stringLength;i++){
+                v.data.stringData[0] = stringToTraverse.data.stringData[i];
+                stmt = node->thenBlock;
+                while(stmt){
+                    result = evaluate(stmt);
+                    if(result.isReturnedValue){
+                        return result;
+                    }
+                    stmt = stmt->thenNext;
+                }
+            }
+        }else{
+            // get ranges
+            Value range_start = evaluate(node->range_start);
+            Value range_end = evaluate(node->range_end);
+            Value range_skip = evaluate(node->range_skip);;
+            // create the iterator variable
+            MemNode* iteratorMemObj = createMemNode(sizeof(Variable));
+            Value v;
+            v.type = D_NUMBER;
+            v.data = range_start.data;
+            Variable* iterator = createVariable(node->data.stringData,D_NUMBER,iteratorMemObj);
+            *(iterator->data) = v;
+            setVariable(iterator);
+            // run the for loop
+            Value result;
+            astNode* stmt;
+            int start= iterator->data->data.numData;
+            if(start > range_end.data.numData){
+                for(int i = start;i > range_end.data.numData;i += range_skip.data.numData){ 
+                    stmt =  node->thenBlock;
+                    while(stmt){
+                        result = evaluate(stmt);
+                        if(result.isReturnedValue){
+                            return result;
+                        }
+                    stmt = stmt->thenNext;
+                    }
+                    iterator->data->data.numData += range_skip.data.numData;
+                }
+            }else{
+                for(int i = start;i < range_end.data.numData;i += range_skip.data.numData){ 
+                    stmt =  node->thenBlock;
+                    while(stmt){
+                        result = evaluate(stmt);
+                        if(result.isReturnedValue){
+                            return result;
+                        }
+                    stmt = stmt->thenNext;
+                    }
+                iterator->data->data.numData += range_skip.data.numData;
+            }
+        }
         }
         return makeNone();
     }

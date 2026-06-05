@@ -162,10 +162,16 @@ while i < 10:
   print(i * "*")
   i = i + 1
 ```
-- Example for 'for loop' :
+- Example for loop:
 ```python
-for i = 0 to 10:
+for i in <1,10,2>: # this print numbers 1,3,5,7,9
   print(i)
+```
+- The <start,end,skip> syntax provides a neat way to set loop ranges.
+- for loops also support string traversal by using the 'in' operator
+```python
+for char in 'hello world':
+  print(char)
 ```
 ## Functions
 - The latest Feature in this version are functions that can accept parameters and can return values. Recursion is now supported.
