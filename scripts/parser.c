@@ -142,8 +142,7 @@ astNode* parseUnary(){
 }
 astNode* parseExponent(){
     astNode* lhs = parseUnary();
-    astNode* lhs = parseAtom();
-    while(current != NULL && ( current->type != R_BRACK && current->type != GT && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE && current->type != COLON) && current->type == OPERATOR && (current->data.charData == '^')){
+    while(current != NULL && (current->type != R_BRACK && current->type != GT && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE && current->type != COLON) && current->type == OPERATOR && (current->data.charData == '^')){
         astNode* parent = createAstNode();
         parent->data.charData = '^';
         parent->type = AST_OPERATOR;
@@ -189,7 +188,7 @@ astNode* parseMulDivMod(){
 astNode* parseComparator(){
     astNode* lhs = parseAddSub();
     if(lhs == NULL) error("Unexpected Error While Parsing Comparators",current->lineCount,RUN_TIME_ERROR);
-    while(current != NULL && ( current->type != R_BRACK && current->type != GT && current->type != COLON && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && (current->type == EQ || current->type == NEQ || current->type != GT || current->type == LT || current->type == GEQ || current->type == LEQ)){
+    while(current != NULL && ( current->type != R_BRACK && current->type != COLON && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && (current->type == EQ || current->type == NEQ || current->type == GT || current->type == LT || current->type == GEQ || current->type == LEQ)){
         astNode* parent = createAstNode();
         switch(current->type){
             case EQ:parent->type = AST_EQ;break;
@@ -212,8 +211,8 @@ astNode* parseComparator(){
 astNode* parseAndOr(){
     astNode* lhs = parseComparator();
     if(lhs == NULL) error("Unexpected Error While Parsing",lhs->lineCount,RUN_TIME_ERROR);
-    while(current != NULL && ( current->type != R_BRACK && current->type != GT && current->type != COLON && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && (current->type == AND || current->type == OR)){
-        astNode* parent=  createAstNode();
+    while(current != NULL && (current->type != R_BRACK && current->type != GT && current->type != COLON && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && (current->type == AND || current->type == OR)){
+        astNode* parent = createAstNode();
         if(current->type == AND) parent->type = AST_AND;
         else parent->type = AST_OR;
         consume();

@@ -514,7 +514,6 @@ Value evaluate(astNode* node){
         }else{
             toReturn.data.boolData = false;
         }
-        
         return toReturn;
     }
     else if(node->type == AST_STR){

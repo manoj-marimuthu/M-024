@@ -4,7 +4,7 @@ echo  Tests For Interpreter
  echo  Arithmetic Test
  interpret.exe "test/test_arithmetic.app" 
  echo  Boolean Test
- interpret.exe "test/test_boolean.app" 
+ interpret.exe "test/test_logical.app" 
  echo  String Test
  interpret.exe "test/test_strings.app" 
  echo  Comparators Test
@@ -13,3 +13,5 @@ echo  Tests For Interpreter
  interpret.exe "test/test_type.app" 
  echo  len() Test
  interpret.exe "test/test_len.app"
+ echo for loop Test
+interpret.exe "test/test_for_loop.app"
