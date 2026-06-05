@@ -7,9 +7,9 @@ const tau = 2 * pi
 
 fn isOdd(n):
     if n % 2 != 0:
-        return False
-    else:
         return True
+    else:
+        return False
 
 fn isEven(n):
     if n % 2 == 0:
@@ -18,10 +18,18 @@ fn isEven(n):
         return False
 
 fn floor(n):
-    return int(n)
+    int_part = int(n)
+    if n >= 0 or n == int_part:
+        return int_part
+    else:
+        return  int_part
 
 fn ceil(n):
-    return int(n+1)
+    int_part = int(n)
+    if n <= 0 or n  == int_part:
+        return int_part
+    else:
+        return int_part + 1
 
 fn factorial(n):
     if n == 0 or n == 1:
@@ -38,9 +46,9 @@ fn abs(n):
 
 fn gcd(a,b):
     while b != 0:
-        temp = a
-        a = b
-        b = temp % b
+        temp = b
+        b = a % b
+        a = temp
     return a
 
 fn lcm(a,b):

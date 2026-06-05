@@ -55,6 +55,7 @@ Function* getFunction(char* functionName){
         if(strcmp(functionName,cur->functionName) == 0){
             return cur;
         }
+        cur = cur->next;
     }
    char err[256];
     snprintf(err,sizeof(err),"Undefined Function '%s'",functionName);
