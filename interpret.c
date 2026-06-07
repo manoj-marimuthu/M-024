@@ -12,11 +12,11 @@
 #include <globals.h>
 #include <imports.h>
 #include <direct.h>
-#define VERSION "V0.2.1"
+#define VERSION "V0.3.0"
 
 void interpret(char* fileName){
     int n = strlen(fileName);
-    if(n > 4 && fileName[n-1] == 'p' && fileName[n-2] == 'p' && fileName[n-3] == 'a' && fileName[n-4] == '.'){
+    if(n > 5 && fileName[n-1] == 'f' && fileName[n-2] == 'c' && fileName[n-3] == 's' && fileName[n-4] == 'm' && fileName[n-5] == '.'){
         CallStackNode* global_frame = createCallStackNode();
         pushCallStackNode(global_frame);
         Import* parent_import = create_import(fileName);
@@ -46,7 +46,7 @@ int main(int argCount,char* args[]){
         clean_all();
         exit(1);
     }
-    if(n >= 4 && strcmp(fileName + n - 4,".app") == 0){
+    if(n >= 6 && strcmp(fileName + n - 5,".mscf") == 0){
         interpret(fileName);
     }else{
         error("Invalid File Name/Extension",-1,FILE_NOT_FOUND_ERROR);

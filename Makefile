@@ -1,7 +1,25 @@
-TARGET = interpret.exe
+TARGET = M024.exe
 COMMAND = gcc -g -Wall -Iinclude
-OBJ = build/interpret.o build/memoryHandler.o build/error.o build/lexer.o build/indentation.o build/parser.o build/variableRegistry.o build/functionRegistry.o build/evaluate.o build/callStack.o build/globals.o build/imports.o
+OBJ = build/interpret.o \
+	build/memoryHandler.o \
+	build/error.o \
+ 	build/lexer.o \
+	build/indentation.o \
+	build/parser.o \
+	build/variableRegistry.o \
+	build/functionRegistry.o \
+	build/evaluate.o \
+	build/callStack.o \
+	build/globals.o \
+	build/imports.o
 
+ifeq ($(OS),Windows_NT)
+	TARGET = M024.exe
+	CLEAN = del /F build\*.o M024.exe
+else
+	TARGET = M024
+	CLEAN = rm -f build/*.o M024
+endif
 $(TARGET) : $(OBJ)
 	$(COMMAND) $(OBJ) -o $(TARGET)
 build/interpret.o : interpret.c
@@ -29,4 +47,4 @@ build/globals.o : scripts/globals.c
 build/imports.o : scripts/imports.c
 	$(COMMAND) -c scripts/imports.c -o build/imports.o
 clean:
-	del build\*.o interpret.exe
+	$(CLEAN)

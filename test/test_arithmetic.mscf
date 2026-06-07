@@ -1,4 +1,4 @@
-load 'lib/tester.app'
+load 'lib/tester.mscf'
 
 # The following test file provides a range of test cases
 # to check if arithemtic operations such as +,-,*,/,%,^

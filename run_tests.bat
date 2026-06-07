@@ -1,17 +1,17 @@
 @echo off
 echo  Tests For Interpreter
- echo  ------------------------------------------ 
- echo  Arithmetic Test
- interpret.exe "test/test_arithmetic.app" 
- echo  Boolean Test
- interpret.exe "test/test_logical.app" 
- echo  String Test
- interpret.exe "test/test_strings.app" 
- echo  Comparators Test
- interpret.exe "test/test_comparators.app" 
- echo  type() Test
- interpret.exe "test/test_type.app" 
- echo  len() Test
- interpret.exe "test/test_len.app"
- echo for loop Test
-interpret.exe "test/test_for_loop.app"
+echo  ------------------------------------------ 
+echo  Arithmetic Test
+M024.exe "test/test_arithmetic.mscf" 
+echo  Boolean Test
+M024.exe "test/test_logical.mscf" 
+echo  String Test
+M024.exe "test/test_strings.mscf" 
+echo  Comparators Test
+M024.exe "test/test_comparators.mscf" 
+echo  type() Test
+M024.exe "test/test_type.mscf" 
+echo  len() Test
+M024.exe "test/test_len.mscf"
+echo for loop Test
+M024.exe "test/test_for_loop.mscf"

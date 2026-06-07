@@ -1,9 +1,9 @@
-load 'lib/tester.app'
+load 'lib/tester.mscf'
 
 # This test file provides a range of test cases for checking
 # the comparators >,<,==,!=,>=,<= with numbers and booleans only
 # since string comparisons are limited (lexicographically) and most
-# are already covered in test_strings.app
+# are already covered in test_strings.mscf
 
 # > 
 

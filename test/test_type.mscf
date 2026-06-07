@@ -1,4 +1,4 @@
-load 'lib/tester.app'
+load 'lib/tester.mscf'
 
 # This test file provides a range of test cases for checking
 # the behaviour of the type() built-in function for a variety
