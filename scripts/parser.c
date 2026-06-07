@@ -188,7 +188,8 @@ astNode* parseMulDivMod(){
 astNode* parseComparator(){
     astNode* lhs = parseAddSub();
     if(lhs == NULL) error("Unexpected Error While Parsing Comparators",current->lineCount,RUN_TIME_ERROR);
-    while(current != NULL && ( current->type != R_BRACK && current->type != COLON && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && (current->type == EQ || current->type == NEQ || current->type == GT || current->type == LT || current->type == GEQ || current->type == LEQ)){
+    while(current != NULL && (current->type != R_BRACK && current->type != COLON && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && (current->type == EQ || current->type == NEQ || current->type == GT || current->type == LT || current->type == GEQ || current->type == LEQ)){
+        if(current && current->type == GT && current->next->type == COLON) break;
         astNode* parent = createAstNode();
         switch(current->type){
             case EQ:parent->type = AST_EQ;break;

@@ -1,4 +1,4 @@
-load 'lib/tester.app'
+load 'lib/tester.mscf'
 
 # This test file provides a range of test cases to check the
 # working of the len built-in function provided to the interpreter

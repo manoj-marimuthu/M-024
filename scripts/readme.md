@@ -1,4 +1,4 @@
-# Interpreter Core - C
+# M-024 Programming Language
 
 The following documentation is made to guide you through
 the c files and their purpose for the interpreter core. 
