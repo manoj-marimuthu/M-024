@@ -38,10 +38,11 @@ typedef enum{
     AST_IDENTIFIER_INDEXED,
     AST_LEN,
     AST_TYPE,
-    AST_LOAD,
+    AST_CURL,
     AST_FOR,
     AST_UPLUS,
-    AST_UMINUS
+    AST_UMINUS,
+    AST_VKILL
 } astNodeType;
 
 typedef struct astNode{
@@ -76,7 +77,7 @@ typedef struct astNode{
 astNode* createAstNode();
 void consume();
 astNode* parseBlock();
-astNode* parseLoad();
+astNode* parseCurl();
 astNode* parseFunction();
 astNode* parseCallFunction();
 astNode* parseParameters();
@@ -95,6 +96,7 @@ astNode* parseAddSub();
 astNode* parseUnary();
 astNode* parseMulDivMod();
 astNode* parseAtom();
+astNode* parseVkill();
 void Parser();
 
 #endif

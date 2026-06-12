@@ -72,3 +72,30 @@ Variable* getVariable(char* varName){
     error(err,0,RUN_TIME_ERROR);
     return NULL;
 }
+
+void removeVariable(char* varName){
+    size_t index = hash(varName);
+    CallStackNode* curStack = call_stack;
+    while(curStack){
+        Variable* current = curStack->locals[index];
+        bool found = false;
+        if(strcmp(current->varName,varName) == 0){
+            curStack->locals[index] = current->next;
+            found = true;
+        }
+        if(found) break;
+        Variable* prev;
+        while(current != NULL){
+            if(strcmp(current->varName,varName) == 0){
+                 printf("HERE");
+                prev->next = current->next;
+                found = true;
+                break;
+            }
+            current = current->next;
+            prev = current;
+        }
+        if(found) break;
+        curStack = curStack->prev;
+    }
+}

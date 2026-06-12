@@ -863,7 +863,12 @@ Value evaluate(astNode* node){
         Value v = evaluate(node->child);
         v.isReturnedValue = true;
         return v;
-    }else if(node->type == AST_LOAD){
+    }
+    else if(node->type == AST_VKILL){
+        removeVariable(node->data.stringData);
+        return makeNone();
+    }
+    else if(node->type == AST_CURL){
         char* fileName = node->data.stringData;
         if(isAlreadyLoaded(fileName)) return makeNone();
         GlobalsCopy copy = copy_state();

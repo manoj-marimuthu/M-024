@@ -823,21 +823,49 @@ astNode* parseCallFunction(){
     }
     return NULL;
 }
-astNode* parseLoad(){
+// parse commands
+astNode* parseVkill(){
     skipNewline();
-    if(current && current->type == LOAD){
+    if(current && current->type == VKILL){
         consume();
-        if(current->type == STRING){
+        if(current && current->type == IDENTIFIER){
             astNode* node = createAstNode();
-            node->type = AST_LOAD;
+            node->type = AST_VKILL;
+            MemNode* strObj = createMemNode(strlen(current->data.strData) + 1);
+            strcpy(strObj->ptr,current->data.strData);
+            node->data.stringData = strObj->ptr;
+            consume();
+            skipNewline();
+            return node;
+        }else{
+            error("vkill requires a variable/function name",current->lineCount,RUN_TIME_ERROR);
+        }
+    }
+    return NULL;
+}
+astNode* parseCurl(){
+    skipNewline();
+    if(current && current->type == CURL){
+        consume();
+        astNode* node = createAstNode();
+        node->type = AST_CURL;
+        if(current->type == STRING){   
             MemNode* strObj = createMemNode(strlen(current->data.strData) + 1);
             strcpy(strObj->ptr,current->data.strData);
             node->data.stringData = strObj->ptr;
             consume();
             return node;
+        }else if(current->type == IDENTIFIER){
+            MemNode* strObj = createMemNode(strlen(current->data.strData) + 10);
+            strcpy(strObj->ptr,"lib/");
+            strcat(strObj->ptr,current->data.strData);
+            strcat(strObj->ptr,".mscf");
+            node->data.stringData = strObj->ptr;
+            consume();
+            return node;
         }
         else{
-            error("Unidentified object located after 'load' keyword. Use a valid string which denotes a filename",current->lineCount,SYNTAX_ERROR);
+            error("Unidentified object located after 'curl' keyword. Use a valid string which denotes a filename",current->lineCount,SYNTAX_ERROR);
             return NULL;
         }
     }else{
@@ -858,7 +886,8 @@ astNode* parseBlock(){
     else if(node->type == IDENTIFIER || node->type == CONST) return parseVarDec();
     else if(node->type == FUNCTION) return parseFunction();
     else if(node->type == RETURN) return parseReturn();
-    else if(node->type == LOAD) return parseLoad();
+    else if(node->type == CURL) return parseCurl();
+    else if(node->type == VKILL) return parseVkill();
     else{ 
         error("Undefined Statement Found While Parsing",current->lineCount,RUN_TIME_ERROR);
         return NULL;
