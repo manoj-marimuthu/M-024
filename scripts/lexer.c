@@ -133,6 +133,9 @@ void line_lexer(char* line,int lineCount,Stack* stk){
                 else if(strcmp(temp->data.strData,"for") == 0){
                     temp->type = FOR;
                 }
+                else if(strcmp(temp->data.strData,"vkill") == 0){
+                    temp->type = VKILL;
+                }
                 else if(strcmp(temp->data.strData,"in") == 0){
                     temp->type = IN;
                 }
@@ -169,8 +172,8 @@ void line_lexer(char* line,int lineCount,Stack* stk){
                 }else if(strcmp(temp->data.strData,"return") == 0){
                     temp->type = RETURN;
                 }
-                else if(strcmp(temp->data.strData,"load") == 0){
-                    temp->type = LOAD;
+                else if(strcmp(temp->data.strData,"curl") == 0){
+                    temp->type = CURL;
                 }
                 else{
                     temp->type = IDENTIFIER;

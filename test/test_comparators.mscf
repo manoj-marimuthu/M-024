@@ -1,4 +1,4 @@
-load 'lib/tester.mscf'
+curl tester
 
 # This test file provides a range of test cases for checking
 # the comparators >,<,==,!=,>=,<= with numbers and booleans only

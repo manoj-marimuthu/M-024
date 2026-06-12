@@ -12,7 +12,7 @@
 #include <globals.h>
 #include <imports.h>
 #include <direct.h>
-#define VERSION "V0.3.0"
+#define VERSION "V0.4.0"
 
 void interpret(char* fileName){
     int n = strlen(fileName);
