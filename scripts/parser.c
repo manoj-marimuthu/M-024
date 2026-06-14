@@ -824,13 +824,13 @@ astNode* parseCallFunction(){
     return NULL;
 }
 // parse commands
-astNode* parseVkill(){
+astNode* parseKill(){
     skipNewline();
-    if(current && current->type == VKILL){
+    if(current && current->type == KILL){
         consume();
         if(current && current->type == IDENTIFIER){
             astNode* node = createAstNode();
-            node->type = AST_VKILL;
+            node->type = AST_KILL;
             MemNode* strObj = createMemNode(strlen(current->data.strData) + 1);
             strcpy(strObj->ptr,current->data.strData);
             node->data.stringData = strObj->ptr;
@@ -887,7 +887,7 @@ astNode* parseBlock(){
     else if(node->type == FUNCTION) return parseFunction();
     else if(node->type == RETURN) return parseReturn();
     else if(node->type == CURL) return parseCurl();
-    else if(node->type == VKILL) return parseVkill();
+    else if(node->type == KILL) return parseKill();
     else{ 
         error("Undefined Statement Found While Parsing",current->lineCount,RUN_TIME_ERROR);
         return NULL;
