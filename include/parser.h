@@ -42,7 +42,7 @@ typedef enum{
     AST_FOR,
     AST_UPLUS,
     AST_UMINUS,
-    AST_VKILL
+    AST_KILL
 } astNodeType;
 
 typedef struct astNode{
@@ -96,7 +96,7 @@ astNode* parseAddSub();
 astNode* parseUnary();
 astNode* parseMulDivMod();
 astNode* parseAtom();
-astNode* parseVkill();
+astNode* parseKill();
 void Parser();
 
 #endif

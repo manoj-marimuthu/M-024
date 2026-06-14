@@ -15,6 +15,8 @@ Variable* createVariable(char* varName,DataType type,MemNode* obj){
     v->isConstant = false;
     v->type = type;
     v->next = NULL;
+    v->in_file_perm = 7;
+    v->out_file_perm = 7;
     return v;
 }
 
@@ -42,6 +44,8 @@ void setVariable(Variable* v){
             }
             current->data = v->data;
             current->type = v->type;
+            current->in_file_perm = v->in_file_perm;
+            current->out_file_perm = v->out_file_perm;
             return;
         }
         prev = current;
@@ -73,23 +77,23 @@ Variable* getVariable(char* varName){
     return NULL;
 }
 
-void removeVariable(char* varName){
+int removeVariable(char* varName){
     size_t index = hash(varName);
     CallStackNode* curStack = call_stack;
+    int found = 0;
     while(curStack){
         Variable* current = curStack->locals[index];
-        bool found = false;
-        if(strcmp(current->varName,varName) == 0){
+        found = 0;
+        if(current && strcmp(current->varName,varName) == 0){
             curStack->locals[index] = current->next;
-            found = true;
+            found = 1;
         }
         if(found) break;
         Variable* prev;
         while(current != NULL){
             if(strcmp(current->varName,varName) == 0){
-                 printf("HERE");
                 prev->next = current->next;
-                found = true;
+                found = 1;
                 break;
             }
             current = current->next;
@@ -98,4 +102,6 @@ void removeVariable(char* varName){
         if(found) break;
         curStack = curStack->prev;
     }
+    if(found) return 1;
+    else return 0;
 }

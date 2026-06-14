@@ -62,3 +62,26 @@ Function* getFunction(char* functionName){
     error(err,0,FUNCTION_ERROR);
     return NULL;
 }
+
+
+int removeFunction(char* functionName){
+    size_t index = hash(functionName);
+    Function* cur = functionArr[index];
+    Function* prev = NULL;
+    bool found = 0;
+    while(cur != NULL){
+        if(strcmp(functionName,cur->functionName) == 0){
+            if(prev == NULL){
+                functionArr[index] = cur->next;
+            }else{
+                prev->next = cur->next;
+            }
+            found = true;
+        }
+        if(found) break;
+        prev = cur;
+        cur = cur->next;
+    }
+    if(found) return 1;
+    else return 0;
+}

@@ -47,7 +47,7 @@ typedef enum {
     CURL,
     FOR,
     IN,
-    VKILL
+    KILL
 } LexerNodeType;
 
 typedef struct LexerNode

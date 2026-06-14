@@ -15,3 +15,7 @@ echo  len() Test
 M024.exe "test/test_len.mscf"
 echo for loop Test
 M024.exe "test/test_for_loop.mscf"
+echo function kill Test
+M024.exe "test/test_function_kill.mscf"
+echo variable kill Test
+M024.exe "test/test_variable_kill.mscf"

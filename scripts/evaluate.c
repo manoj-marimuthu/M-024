@@ -864,8 +864,16 @@ Value evaluate(astNode* node){
         v.isReturnedValue = true;
         return v;
     }
-    else if(node->type == AST_VKILL){
-        removeVariable(node->data.stringData);
+    else if(node->type == AST_KILL){
+        int status = removeVariable(node->data.stringData);
+        // variable to remove  not found
+        if(status == 0){
+            status = removeFunction(node->data.stringData);
+        }
+        // if no variable/function of such name was removed
+        if(status == 0){
+            error("Unknown variable/function provided",node->lineCount,RUN_TIME_ERROR);
+        }
         return makeNone();
     }
     else if(node->type == AST_CURL){

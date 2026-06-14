@@ -22,5 +22,5 @@ Param* createParam(char* paramName);
 Function* createFunction();
 void setFunction(Function* f);
 Function* getFunction(char* functionName);
-
+int removeFunction(char* functionName);
 #endif
