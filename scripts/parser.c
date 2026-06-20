@@ -52,18 +52,6 @@ astNode* parseAtom(){
         node->data.stringData = gcObj->ptr;
         strcpy(node->data.stringData,current->data.strData);
         consume();
-        if(current && current->type == L_SQUARE_BRACK){
-            consume();
-            astNode* indexNode = parseExpression();
-            if(current && current->type == R_SQUARE_BRACK){
-                consume();
-                node->index = indexNode;
-                node->type = AST_INDEXED;
-                return node;
-            }else{
-                error("Missing ] for indexing",current->lineCount,SYNTAX_ERROR);
-            }
-        }
         return node;
     }
     else if(current && current->type == BOOLEAN){
@@ -87,18 +75,6 @@ astNode* parseAtom(){
         node->data.stringData = gcObj->ptr;
         strcpy(node->data.stringData,current->data.strData);
         consume();
-        if(current && current->type == L_SQUARE_BRACK){
-            consume();
-            astNode* indexNode = parseExpression();
-            if(current && current->type == R_SQUARE_BRACK){
-                consume();
-                node->index = indexNode;
-                node->type = AST_IDENTIFIER_INDEXED;
-                return node;
-            }else{
-                error("Missing ] while indexing a variable",current->lineCount,SYNTAX_ERROR);
-            }
-        }
         return node;
     }
     else if(current && current->type == L_BRACK){

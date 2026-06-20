@@ -1,3 +1,3 @@
 x = 10
 kill x
-print(x) # should raise an undefined variable error
+print(x) 
