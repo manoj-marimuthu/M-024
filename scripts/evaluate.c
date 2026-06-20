@@ -11,19 +11,95 @@
 #include <callStack.h>
 #include <globals.h>
 #include <imports.h>
-Value makeValue(){
-    Value v;
-    v.isReturnedValue = false;
-    return v;
+ 
+static void printValue(Value v){
+    switch(v.type){
+        case D_NUMBER:
+            if(floor(v.data.numData) == v.data.numData){
+                printf("%d",(int) floor(v.data.numData));
+            }else{
+                printf("%g",v.data.numData);
+            }
+            fflush(stdout);
+            break;
+        case D_STRING:
+            printf("%s",(char*) v.data.stringData);
+            break;
+        case D_BOOLEAN:
+            if(v.data.boolData == true){
+                printf("True");
+            }else{
+                printf("False");
+            }
+            break;
+        case D_NONE:
+            printf("None");
+            break;
+        default:
+        break;
+    }
+    printf(" ");
 }
-Value makeNone(){
+
+static double toNumber(Value val){
+    switch(val.type){
+        case D_NUMBER:
+            return val.data.numData;
+            break;
+        case D_BOOLEAN:
+            return val.data.boolData;
+            break;
+        default:
+            return val.data.numData;
+            break;
+    }
+}
+static double strictToNumber(Value val,int lineCount){
+    // api for division with checks
+    double result = toNumber(val);
+    if(result == 0){
+        error("Division By Zero Error",lineCount,DIVISION_BY_ZERO_ERROR);
+    }
+    return result;
+}
+
+static char* cloneString(char* str){
+    int size = strlen(str) + 1;
+    MemNode* strObj = createMemNode(size);
+    strcpy(strObj->ptr,str);
+    return strObj->ptr;
+}
+
+
+static Value makeNone(){
     Value v;
     v.isReturnedValue= false;
     v.type = D_NONE;
     return v;
 }
 
-bool isTruthy(Value val){
+static Value makeNumber(double num){
+    Value v;
+    v.type = D_NUMBER;
+    v.data.numData = num;
+    return v;
+}
+
+static Value makeBoolean(bool boolean){
+    Value v;
+    v.type = D_BOOLEAN;
+    v.data.boolData = boolean;
+    return v;
+}
+
+static Value makeString(char* str){
+    Value v;
+    v.type = D_STRING;
+    v.data.stringData = cloneString(str);
+    return v;
+}
+
+static bool isTruthy(Value val){
     switch(val.type){
         case D_NUMBER:
             return val.data.numData != 0;
@@ -37,68 +113,30 @@ bool isTruthy(Value val){
             return false;
     }
 }
-Value evaluate(astNode* node){
+static Value runStatments(astNode* node){
+    astNode* cur = node;
+    Value result;
+    while(cur){
+        result = evaluate(cur);
+        if(result.isReturnedValue){
+            return result;
+        }
+        cur = cur->thenNext;
+    }
+    return makeNone();
+}
+static Value evaluate(astNode* node){
    if(node->type == AST_STRING){
-     Value v = makeValue();
-     MemNode* strObj = createMemNode(strlen(node->data.stringData)+1);
-     v.data.stringData = strObj->ptr;
-     strcpy(v.data.stringData,node->data.stringData);
-     v.type = D_STRING;
-     return v;     
-   }
-   else if(node->type == AST_INDEXED){
-        Value v = makeValue();
-        Value index = evaluate(node->index);
-        if(strlen(node->data.stringData) <= index.data.numData){
-            error("Index out of bounds",node->lineCount,INDEXING_ERROR);
-        }
-        if(index.type != D_NUMBER){
-            error("Invalid Parameter For Indexing",node->lineCount,INDEXING_ERROR);
-        }
-        MemNode* strObj = createMemNode(3);
-        v.data.stringData = strObj->ptr;
-        if(index.data.numData != floor(index.data.numData) || index.data.numData < 0){
-            error("Index Error , Wrong Parameter (Required : Number)",node->lineCount,INDEXING_ERROR);
-        }
-        v.data.stringData[0] = node->data.stringData[(int) index.data.numData];
-        v.data.stringData[1] = '\0';
-        v.type = D_STRING;
-        return v;
-   }
-   else if(node->type == AST_IDENTIFIER_INDEXED){
-        Variable* variable = getVariable(node->data.stringData);
-        Value * var = variable->data;
-        Value index = evaluate(node->index);
-        if(strlen(var->data.stringData) <= index.data.numData){
-            error("Index out of bounds",node->lineCount,INDEXING_ERROR);
-        }
-        if(index.type != D_NUMBER){
-            error("Invalid Parameter For Indexing",node->lineCount,INDEXING_ERROR);
-        }
-        Value result;
-        if(var->type != D_STRING){
-            char errMsg[256];
-            snprintf(errMsg,sizeof(errMsg),"Indexing is only allowed for strings. Check '%s' 's type (String Required)",variable->varName);
-            error(errMsg,node->lineCount,INDEXING_ERROR);
-        }
-        result.type = D_STRING;
-        MemNode* strObj = createMemNode(3);
-        result.data.stringData = strObj->ptr;
-        result.data.stringData[0] = var->data.stringData[(int) index.data.numData];
-        result.data.stringData[1] = '\0';
-        return result;
+        Value v = makeString(node->data.stringData);
+        return v;     
    }
    else if(node->type == AST_NUMBER){
-    Value v;
-    v.data.numData = node->data.numData;
-    v.type = D_NUMBER;
-    return v;
+        Value v = makeNumber(node->data.numData);
+        return v;
    }
    else if(node->type == AST_BOOLEAN){
-    Value v;
-    v.data.boolData = node->data.boolData;
-    v.type = D_BOOLEAN;
-    return v;
+        Value v = makeBoolean(node->data.boolData);
+        return v;
    }
    else if(node->type == AST_UPLUS){
         Value v = evaluate(node->child);
@@ -113,24 +151,17 @@ Value evaluate(astNode* node){
         Value * var = variable->data;
         Value result;
         if(var->type == D_STRING){
-            result.type = D_STRING;
-            MemNode* strObj = createMemNode(strlen((char*) var->data.stringData)+1);
-            strcpy(strObj->ptr,(char*) var->data.stringData);
-            result.data.stringData = strObj->ptr; 
+            result = makeString(var->data.stringData); 
         }else if(var->type == D_NUMBER){
-            result.type = D_NUMBER;
-            result.data.numData =  var->data.numData;
+            result = makeNumber(var->data.numData);
         }else if(var->type == D_BOOLEAN){
-            result.type = D_BOOLEAN;
-            result.data.boolData = var->data.boolData;
+            result = makeBoolean(var->data.boolData);
         }else{
             result.type = D_NONE;
         }
         return result;
     }else if(node->type == AST_NONE){
-        Value v;
-        v.type= D_NONE;
-        return v;
+        return makeNone();
     }else if(node->type == AST_OPERATOR){
         char op = node->data.charData;
         Value left = evaluate(node->left);
@@ -138,157 +169,100 @@ Value evaluate(astNode* node){
         Value v;
         switch(op){
             case '+':
-                if(left.type == D_NUMBER && right.type == D_NUMBER){
-                    v.type= D_NUMBER;
-                    v.data.numData = left.data.numData + right.data.numData;
-                }else if(left.type == D_STRING && right.type == D_STRING){
-                    MemNode* node = createMemNode(strlen(left.data.stringData) + strlen(right.data.stringData) + 1);
-                    v.data.stringData = node->ptr;
-                    v.type = D_STRING;
-                    strcpy(v.data.stringData,left.data.stringData);
-                    strcat(v.data.stringData,right.data.stringData);
+                if((left.type == D_NUMBER && right.type == D_NUMBER) || 
+                    (left.type == D_BOOLEAN && right.type == D_BOOLEAN) || 
+                    (left.type == D_NUMBER && right.type == D_BOOLEAN) ||
+                    (left.type == D_BOOLEAN && right.type == D_NUMBER)
+                ){
+                    v = makeNumber(toNumber(left) + toNumber(right));
                 }
-                else if(left.type == D_BOOLEAN && right.type == D_BOOLEAN){
-                    v.type = D_NUMBER;
-                    v.data.numData = left.data.boolData + right.data.boolData;
-                }else if(left.type == D_NUMBER && right.type == D_BOOLEAN){
-                    v.type = D_NUMBER;
-                    v.data.numData = left.data.numData + right.data.boolData;
-                }else if(left.type == D_BOOLEAN && right.type == D_NUMBER){
-                    v.type = D_NUMBER;
-                    v.data.numData = left.data.boolData + right.data.numData;
-                }
+                else if(left.type == D_STRING && right.type == D_STRING){
+                    char result[strlen(left.data.stringData) + strlen(right.data.stringData) + 1];
+                    strcpy(result,left.data.stringData);
+                    strcat(result,right.data.stringData);
+                    v = makeString(result);
+                } 
                 else{
-                    error("Incorrect Usage of '+' operator",node->lineCount,SYNTAX_ERROR);
+                    error("Incorrect usage of '+' operator",node->lineCount,SYNTAX_ERROR);
                 }
                 break;
             case '-':
-                if(left.type == D_NUMBER && right.type == D_NUMBER){
-                    v.type = D_NUMBER;
-                    v.data.numData = left.data.numData - right.data.numData;
-                }
-                else if(left.type == D_BOOLEAN && right.type == D_BOOLEAN){
-                    v.type = D_NUMBER;
-                    v.data.numData = left.data.boolData - right.data.boolData;
-                }   
-                else if(left.type == D_NUMBER && right.type == D_BOOLEAN){
-                    v.type = D_NUMBER;
-                    v.data.numData = left.data.numData - right.data.boolData;
-                }else if(left.type == D_BOOLEAN && right.type == D_NUMBER){
-                    v.type = D_NUMBER;
-                    v.data.numData = left.data.boolData - right.data.numData;
+                if((left.type == D_NUMBER && right.type == D_NUMBER) || 
+                    (left.type == D_BOOLEAN && right.type == D_BOOLEAN) || 
+                    (left.type == D_NUMBER && right.type == D_BOOLEAN) ||
+                    (left.type == D_BOOLEAN && right.type == D_NUMBER)
+                ){
+                    v = makeNumber(toNumber(left) - toNumber(right));
                 }
                 else{
                     error("Incorrect Usage of '-' operator",node->lineCount,SYNTAX_ERROR);
                 }
                 break;
             case '*':
-                if(left.type == D_NUMBER && right.type == D_NUMBER){
-                    v.type= D_NUMBER;
-                    v.data.numData = left.data.numData * right.data.numData;
-                }
-                else if(left.type == D_BOOLEAN && right.type == D_BOOLEAN){
-                    v.type = D_NUMBER;
-                    v.data.numData = left.data.boolData * right.data.boolData;
-                }else if(left.type == D_NUMBER && right.type == D_BOOLEAN){
-                    v.type = D_NUMBER;
-                    v.data.numData = left.data.numData * right.data.boolData;
-                }else if(left.type == D_BOOLEAN && right.type == D_NUMBER){
-                    v.type = D_NUMBER;
-                    v.data.numData = left.data.boolData * right.data.numData;
+                if((left.type == D_NUMBER && right.type == D_NUMBER) || 
+                    (left.type == D_BOOLEAN && right.type == D_BOOLEAN) || 
+                    (left.type == D_NUMBER && right.type == D_BOOLEAN) ||
+                    (left.type == D_BOOLEAN && right.type == D_NUMBER)
+                ){
+                    v = makeNumber(toNumber(left) * toNumber(right));
                 }
                 else if(left.type == D_STRING && right.type == D_NUMBER){
                     if(right.data.numData <= 0 || floor(right.data.numData) != right.data.numData){
-                        error("Usage of String Multiplication with a ZERO/Negative number is Illegal",node->lineCount,RUN_TIME_ERROR);
+                        error("String replication is illegal with 0 or negative numbers",node->lineCount,RUN_TIME_ERROR);
                     }
-                    MemNode* node = createMemNode(strlen(left.data.stringData) * right.data.numData + 1);
-                    v.data.stringData = (char*) node->ptr;
+                    char result[strlen(left.data.stringData) + (int) right.data.numData + 1];
                     for(int i =0;i < right.data.numData;i++){
-                        if(i == 0) strcpy(v.data.stringData,left.data.stringData);
-                        else strcat(v.data.stringData,left.data.stringData);
+                        if(i == 0) strcpy(result,left.data.stringData);
+                        else strcat(result,left.data.stringData);
                     }
-                    v.type = D_STRING;
+                    v = makeString(result);
                 }
                 else if(right.type == D_STRING && left.type == D_NUMBER){
                     if(left.data.numData <= 0 || floor(left.data.numData) != left.data.numData){
-                        error("Usage of String Multiplication with a ZERO/Negative number is Illegal",node->lineCount,RUN_TIME_ERROR);
+                        error("String replication is illegal with 0 or negative numbers",node->lineCount,RUN_TIME_ERROR);
                     }
-                    MemNode* node = createMemNode(strlen(right.data.stringData) * left.data.numData + 1);
-                    v.data.stringData = (char*) node->ptr;
+                    char result[strlen(right.data.stringData) * (int) left.data.numData + 1];
                     for(int i =0;i < left.data.numData;i++){
-                        if(i == 0) strcpy(v.data.stringData,right.data.stringData);
-                        else strcat(v.data.stringData,right.data.stringData);
+                        if(i == 0) strcpy(result,right.data.stringData);
+                        else strcat(result,right.data.stringData);
                     }
-                    v.type = D_STRING;
+                    v = makeString(result);
                 }
                 else{
                     error("Incorrect Usage of '*' operator",node->lineCount,SYNTAX_ERROR);
                 }
-                break;
+            break; 
             case '/':
-                if(left.type == D_NUMBER && right.type == D_NUMBER){
-                    v.type= D_NUMBER;
-                    if(right.data.numData == 0){
-                        error("Division By Zero Error",node->lineCount,DIVISION_BY_ZERO_ERROR);
-                    }
-                    v.data.numData = left.data.numData / right.data.numData;
-                }
-                else if(left.type == D_BOOLEAN && right.type == D_BOOLEAN){
-                    v.type = D_NUMBER;
-                    if(right.data.boolData == false){
-                        error("False is 0, /False",node->lineCount,DIVISION_BY_ZERO_ERROR);
-                    }
-                    v.data.numData = left.data.boolData / right.data.boolData;
-                }else if(left.type == D_NUMBER && right.type == D_BOOLEAN){
-                    v.type = D_NUMBER;
-                    if(right.data.boolData == false){
-                        error("False is 0, /False",node->lineCount,SYNTAX_ERROR);
-                    }
-                    v.data.numData = left.data.numData / right.data.boolData;
-                }else if(left.type == D_BOOLEAN && right.type == D_NUMBER){
-                    v.type = D_NUMBER;
-                    if(right.data.numData == 0){
-                        error("Division By Zero Error (Denominator Int = 0)",node->lineCount,SYNTAX_ERROR);
-                    }
-                    v.data.numData = left.data.boolData / right.data.numData;
+                if((left.type == D_NUMBER && right.type == D_NUMBER) || 
+                    (left.type == D_BOOLEAN && right.type == D_BOOLEAN) || 
+                    (left.type == D_NUMBER && right.type == D_BOOLEAN) ||
+                    (left.type == D_BOOLEAN && right.type == D_NUMBER)
+                ){
+                    v = makeNumber(toNumber(left) / strictToNumber(right,node->lineCount));
                 }
                 else{
                     error("Incorrect Usage of '/' operator",node->lineCount,RUN_TIME_ERROR);
                 }
                 break;
             case '%':
-                if(left.type == D_NUMBER && right.type == D_NUMBER){
-                    v.type = D_NUMBER;
-                    v.data.numData = (int) left.data.numData % (int) right.data.numData;
-                }
-                else if(left.type == D_BOOLEAN && right.type == D_BOOLEAN){
-                    v.type = D_NUMBER;
-                    v.data.numData = (int) left.data.boolData % (int) right.data.boolData;
-                }else if(left.type == D_NUMBER && right.type == D_BOOLEAN){
-                    v.type = D_NUMBER;
-                    v.data.numData = (int) left.data.numData % (int) right.data.boolData;
-                }else if(left.type == D_BOOLEAN && right.type == D_NUMBER){
-                    v.type = D_NUMBER;
-                    v.data.numData = (int) left.data.boolData % (int) right.data.numData;
+                if((left.type == D_NUMBER && right.type == D_NUMBER) || 
+                    (left.type == D_BOOLEAN && right.type == D_BOOLEAN) || 
+                    (left.type == D_NUMBER && right.type == D_BOOLEAN) ||
+                    (left.type == D_BOOLEAN && right.type == D_NUMBER)
+                ){
+                    v = makeNumber((int) toNumber(left) % (int) toNumber(right));
                 }
                 else{
                     error("Incorrect Usage of '%' (modulus) operator",node->lineCount,RUN_TIME_ERROR);
                 }
                 break;
             case '^':
-                if(left.type == D_NUMBER && right.type == D_NUMBER){
-                    v.type= D_NUMBER;
-                    v.data.numData = pow(left.data.numData,right.data.numData);
-                }
-                else if(left.type == D_BOOLEAN && right.type == D_BOOLEAN){
-                    v.type = D_NUMBER;
-                    v.data.numData = pow(left.data.boolData,right.data.boolData);
-                }else if(left.type == D_NUMBER && right.type == D_BOOLEAN){
-                    v.type = D_NUMBER;
-                    v.data.numData = pow(left.data.numData,right.data.boolData);
-                }else if(left.type == D_BOOLEAN && right.type == D_NUMBER){
-                    v.type = D_NUMBER;
-                    v.data.numData = pow(left.data.boolData,right.data.numData);
+                if((left.type == D_NUMBER && right.type == D_NUMBER) || 
+                    (left.type == D_BOOLEAN && right.type == D_BOOLEAN) || 
+                    (left.type == D_NUMBER && right.type == D_BOOLEAN) ||
+                    (left.type == D_BOOLEAN && right.type == D_NUMBER)
+                ){
+                    v = makeNumber(pow(toNumber(left),toNumber(right)));
                 }
                 else{
                     error("Incorrect Usage of '^' (exponent) operator",node->lineCount,RUN_TIME_ERROR);
@@ -299,24 +273,18 @@ Value evaluate(astNode* node){
     }else if(node->type == AST_AND){
         Value left = evaluate(node->left);
         Value right = evaluate(node->right);
-        Value v;
-        v.type = D_BOOLEAN;
-        v.data.boolData = isTruthy(left) && isTruthy(right);  
+        Value v = makeBoolean(isTruthy(left) && isTruthy(right));  
         return v;
     }
     else if(node->type == AST_OR){
         Value left = evaluate(node->left);
         Value right = evaluate(node->right);
-        Value v;
-        v.type = D_BOOLEAN;
-        v.data.boolData = isTruthy(left) || isTruthy(right);
+        Value v = makeBoolean(isTruthy(left) || isTruthy(right));
         return v;
     }
     else if(node->type == AST_NOT){
         Value child = evaluate(node->child);
-        Value v;
-        v.type = D_BOOLEAN;
-        v.data.boolData = !isTruthy(child);
+        Value v = makeBoolean(!isTruthy(child));
         return v;
     }
     else if(node->type == AST_IN){
@@ -341,83 +309,69 @@ Value evaluate(astNode* node){
         Value left = evaluate(node->left);
         Value right = evaluate(node->right);
         Value v;
-        v.type = D_BOOLEAN;
         if(left.type == D_STRING || right.type == D_STRING){
-            error("String Comparison is not yet added. Sorry for the inconvenience",node->lineCount,RUN_TIME_ERROR);
-        }else if(left.type == D_NUMBER && right.type == D_NUMBER){
-            v.data.boolData = left.data.numData > right.data.numData;
-        }
-        else if(left.type == D_BOOLEAN && right.type == D_BOOLEAN ){
-            v.data.boolData = left.data.boolData > right.data.boolData;
-        }else if(left.type == D_BOOLEAN && right.type == D_NUMBER){
-            v.data.boolData = left.data.boolData > right.data.numData;
-        }else if(left.type == D_NUMBER && right.type == D_BOOLEAN){
-            v.data.boolData = left.data.numData > right.data.boolData;
-        }else{
+            error("String Comparison is not yet added. Sorry for the inconvenience :(",node->lineCount,RUN_TIME_ERROR);
+        }else if((left.type == D_NUMBER && right.type == D_NUMBER) || 
+                    (left.type == D_BOOLEAN && right.type == D_BOOLEAN) || 
+                    (left.type == D_NUMBER && right.type == D_BOOLEAN) ||
+                    (left.type == D_BOOLEAN && right.type == D_NUMBER)
+                ){
+                    v = makeNumber(toNumber(left) > toNumber(right));
+                }
+        else{
             error("Incorrect Usage of '>' operator",node->lineCount,RUN_TIME_ERROR);
-        }   
+        }
         return v;
     }
     else if(node->type == AST_LT){
         Value left = evaluate(node->left);
         Value right = evaluate(node->right);
         Value v;
-        v.type = D_BOOLEAN;
         if(left.type == D_STRING || right.type == D_STRING){
-            error("String Comparison is not yet added. Sorry for the inconvenience",-node->lineCount,RUN_TIME_ERROR);
-        }else if(left.type == D_NUMBER && right.type == D_NUMBER){
-            v.data.boolData = left.data.numData < right.data.numData;
-        }
-        else if(left.type == D_BOOLEAN && right.type == D_BOOLEAN ){
-            v.data.boolData = left.data.boolData < right.data.boolData;
-        }else if(left.type == D_BOOLEAN && right.type == D_NUMBER){
-            v.data.boolData = left.data.boolData < right.data.numData;
-        }else if(left.type == D_NUMBER && right.type == D_BOOLEAN){
-            v.data.boolData = left.data.numData < right.data.boolData;
-        }else{
+            error("String Comparison is not yet added. Sorry for the inconvenience :(",node->lineCount,RUN_TIME_ERROR);
+        }else if((left.type == D_NUMBER && right.type == D_NUMBER) || 
+                    (left.type == D_BOOLEAN && right.type == D_BOOLEAN) || 
+                    (left.type == D_NUMBER && right.type == D_BOOLEAN) ||
+                    (left.type == D_BOOLEAN && right.type == D_NUMBER)
+                ){
+                    v = makeNumber(toNumber(left) < toNumber(right));
+                }
+        else{
             error("Incorrect Usage of '<' operator",node->lineCount,RUN_TIME_ERROR);
-        } 
+        }
         return v;
     }
     else if(node->type == AST_GEQ){
         Value left = evaluate(node->left);
         Value right = evaluate(node->right);
         Value v;
-        v.type = D_BOOLEAN;
         if(left.type == D_STRING || right.type == D_STRING){
-            error("String Comparison is not yet added. Sorry for the inconvenience",node->lineCount,RUN_TIME_ERROR);
-        }else if(left.type == D_NUMBER && right.type == D_NUMBER){
-            v.data.boolData = left.data.numData >= right.data.numData;
-        }
-        else if(left.type == D_BOOLEAN && right.type == D_BOOLEAN ){
-            v.data.boolData = left.data.boolData >= right.data.boolData;
-        }else if(left.type == D_BOOLEAN && right.type == D_NUMBER){
-            v.data.boolData = left.data.boolData >= right.data.numData;
-        }else if(left.type == D_NUMBER && right.type == D_BOOLEAN){
-            v.data.boolData = left.data.numData >= right.data.boolData;
-        }else{
+            error("String Comparison is not yet added. Sorry for the inconvenience :(",node->lineCount,RUN_TIME_ERROR);
+        }else if((left.type == D_NUMBER && right.type == D_NUMBER) || 
+                    (left.type == D_BOOLEAN && right.type == D_BOOLEAN) || 
+                    (left.type == D_NUMBER && right.type == D_BOOLEAN) ||
+                    (left.type == D_BOOLEAN && right.type == D_NUMBER)
+                ){
+                    v = makeNumber(toNumber(left) >= toNumber(right));
+                }
+        else{
             error("Incorrect Usage of '>=' operator",node->lineCount,RUN_TIME_ERROR);
         }
-        
-        
         return v;
     }else if(node->type == AST_LEQ){
         Value left = evaluate(node->left);
         Value right = evaluate(node->right);
         Value v;
-        v.type = D_BOOLEAN;
         if(left.type == D_STRING || right.type == D_STRING){
-            error("String Comparison is not yet added. Sorry for the inconvenience",node->lineCount,RUN_TIME_ERROR);
-        }else if(left.type == D_NUMBER && right.type == D_NUMBER){
-            v.data.boolData = left.data.numData <= right.data.numData;
-        }
-        else if(left.type == D_BOOLEAN && right.type == D_BOOLEAN ){
-            v.data.boolData = left.data.boolData <= right.data.boolData;
-        }else if(left.type == D_BOOLEAN && right.type == D_NUMBER){
-            v.data.boolData = left.data.boolData <= right.data.numData;
-        }else if(left.type == D_NUMBER && right.type == D_BOOLEAN){
-            v.data.boolData = left.data.numData <= right.data.boolData;
-        }else{
+            error("String Comparison is not yet added. Sorry for the inconvenience :(",node->lineCount,RUN_TIME_ERROR);
+        }else if((left.type == D_NUMBER && right.type == D_NUMBER) || 
+                    (left.type == D_BOOLEAN && right.type == D_BOOLEAN) || 
+                    (left.type == D_NUMBER && right.type == D_BOOLEAN) ||
+                    (left.type == D_BOOLEAN && right.type == D_NUMBER)
+                ){
+                    v = makeNumber(toNumber(left) <= toNumber(right));
+                }
+        else{
             error("Incorrect Usage of '<=' operator",node->lineCount,RUN_TIME_ERROR);
         }
         
@@ -427,24 +381,20 @@ Value evaluate(astNode* node){
         Value left = evaluate(node->left);
         Value right = evaluate(node->right);
         Value v;
-        v.type = D_BOOLEAN;
         if(left.type == D_STRING && right.type == D_STRING){
-            v.data.boolData =  strcmp(left.data.stringData,right.data.stringData) == 0;
-        }else if(left.type == D_NUMBER && right.type == D_NUMBER){
-            v.data.boolData = left.data.numData == right.data.numData;
-        }
-        else if(left.type == D_BOOLEAN && right.type == D_BOOLEAN ){
-            v.data.boolData = left.data.boolData == right.data.boolData;
-        }else if(left.type == D_BOOLEAN && right.type == D_NUMBER){
-            v.data.boolData = left.data.boolData == right.data.numData;
-        }else if(left.type == D_NUMBER && right.type == D_BOOLEAN){
-            v.data.boolData = left.data.numData == right.data.boolData;
+            v = makeBoolean(strcmp(left.data.stringData,right.data.stringData) == 0);
+        }else if((left.type == D_NUMBER && right.type == D_NUMBER) || 
+                    (left.type == D_BOOLEAN && right.type == D_BOOLEAN) || 
+                    (left.type == D_NUMBER && right.type == D_BOOLEAN) ||
+                    (left.type == D_BOOLEAN && right.type == D_NUMBER)
+                ){
+                    v = makeNumber(toNumber(left) == toNumber(right));
         }
         else if(left.type == D_NONE && right.type == D_NONE){
-            v.data.boolData = true;
+            v = makeBoolean(true);
         }
         else if(left.type == D_NONE || right.type == D_NONE){
-            v.data.boolData = false;
+            v = makeBoolean(false);
         }
         else{
             error("Incorrect Usage of '==' operator",node->lineCount,RUN_TIME_ERROR);
@@ -457,21 +407,17 @@ Value evaluate(astNode* node){
         Value v;
         v.type = D_BOOLEAN;
         if(left.type == D_STRING && right.type == D_STRING){
-            v.data.boolData =  strcmp(left.data.stringData,right.data.stringData) != 0;
-        }else if(left.type == D_NUMBER && right.type == D_NUMBER){
-            v.data.boolData = left.data.numData != right.data.numData;
+            v = makeBoolean(strcmp(left.data.stringData,right.data.stringData) != 0);
         }
-        else if(left.type == D_BOOLEAN && right.type == D_BOOLEAN ){
-            v.data.boolData = left.data.boolData != right.data.boolData;
-        }else if(left.type == D_BOOLEAN && right.type == D_NUMBER){
-            v.data.boolData = left.data.boolData != right.data.numData;
-        }else if(left.type == D_NUMBER && right.type == D_BOOLEAN){
-            v.data.boolData = left.data.numData != right.data.boolData;
+        else if((left.type == D_NUMBER && right.type == D_NUMBER) || 
+                    (left.type == D_BOOLEAN && right.type == D_BOOLEAN) || 
+                    (left.type == D_NUMBER && right.type == D_BOOLEAN) ||
+                    (left.type == D_BOOLEAN && right.type == D_NUMBER)
+                ){
+                    v = makeNumber(toNumber(left) != toNumber(right));
         }
-        else if(left.type == D_NONE && right.type == D_NONE){
-            v.data.boolData = false;
-        }else if(left.type == D_NONE || right.type == D_NONE){
-            v.data.boolData = true;
+        else if((left.type == D_NONE && right.type != D_NONE) || (left.type != D_NONE && right.type == D_NONE)){
+            v = makeBoolean(true);
         }
         else{
             error("Incorrect Usage of '!=' operator",node->lineCount,RUN_TIME_ERROR);
@@ -507,46 +453,33 @@ Value evaluate(astNode* node){
     }
     else if(node->type == AST_BOOL){
         Value v = evaluate(node->child);
-        Value toReturn;
-        toReturn.type = D_BOOLEAN;
-        if(isTruthy(v)){
-            toReturn.data.boolData = true;
-        }else{
-            toReturn.data.boolData = false;
-        }
+        Value toReturn = makeBoolean(isTruthy(v));
         return toReturn;
     }
     else if(node->type == AST_STR){
         Value v = evaluate(node->child);
         Value toReturn;
-        toReturn.type = D_STRING;
         if(v.type == D_STRING){
             return v;
         }else if(v.type == D_BOOLEAN){
             if(v.data.boolData){
-                MemNode* node = createMemNode(5);
-                toReturn.data.stringData = node->ptr;
-                strcpy(toReturn.data.stringData,"True");
+                toReturn = makeString("True");
             }else{
-                MemNode* node = createMemNode(6);
-                toReturn.data.stringData = node->ptr;
-                strcpy(toReturn.data.stringData,"False");
+                toReturn = makeString("False");
             }
         }
         else if(v.type == D_NONE){
-            MemNode* node = createMemNode(5);
-            toReturn.data.stringData  = node->ptr;
-            strcpy(toReturn.data.stringData,"None");
+            toReturn = makeString("None");
         }else if(v.type == D_NUMBER){
             if(v.data.numData == floor(v.data.numData)){
-                MemNode* node = createMemNode(100);
-                toReturn.data.stringData = node->ptr;
+                char str[100];
                 int n = (int) v.data.numData;
-                snprintf(toReturn.data.stringData,100,"%d",n);
+                snprintf(str,100,"%d",n);
+                toReturn = makeString(str);
             }else{
-                 MemNode* node = createMemNode(100);
-                toReturn.data.stringData = node->ptr;
-                snprintf(toReturn.data.stringData,100,"%g",v.data.numData);
+                char str[100];
+                snprintf(str,100,"%g",v.data.numData);
+                toReturn = makeString(str);
             }
         }
         return toReturn;
@@ -556,8 +489,7 @@ Value evaluate(astNode* node){
         Value inValue = evaluate(val);
         Value toReturn;
         if(inValue.type == D_STRING){
-            toReturn.data.numData = strlen(inValue.data.stringData);
-            toReturn.type = D_NUMBER;
+            toReturn = makeNumber(strlen(inValue.data.stringData));
         }else{
             error("len() does not support number/boolean/None as a valid parameter",node->lineCount,RUN_TIME_ERROR);
         }
@@ -567,55 +499,26 @@ Value evaluate(astNode* node){
         astNode* val = node->child;
         Value inValue = evaluate(val);
         Value toReturn;
-        toReturn.type = D_STRING;
-        MemNode* strObj = createMemNode(10);
         if(inValue.type == D_STRING){
-            strcpy(strObj->ptr,"STRING");
+            toReturn = makeString("STRING");
         }else if(inValue.type == D_NUMBER){
-            strcpy(strObj->ptr,"NUMBER");
+            toReturn = makeString("NUMBER");
         }else if(inValue.type == D_BOOLEAN){
-            strcpy(strObj->ptr,"BOOLEAN");
+            toReturn = makeString("BOOLEAN");
         }else{
-            strcpy(strObj->ptr,"NONE");
+            toReturn = makeString("NONE");
         }
-        toReturn.data.stringData  = strObj->ptr;
         return toReturn;
     }
     else if(node->type == AST_PRINT){
         astNode* current = node->child;
         Value v;
         while(current != NULL){
-            v =evaluate(current);
-            switch(v.type){
-                case D_NUMBER:
-                    if(floor(v.data.numData) == v.data.numData){
-                        printf("%d",(int) floor(v.data.numData));
-                    }else{
-                        printf("%g",v.data.numData);
-                    }
-                    printf(" ");
-                    fflush(stdout);
-                    break;
-                case D_STRING:
-                    printf("%s",(char*) v.data.stringData);
-                    printf(" ");
-                    break;
-                case D_BOOLEAN:
-                    if(v.data.boolData == true){
-                        printf("True ");
-                    }else{
-                        printf("False ");
-                    }
-                    break;
-                case D_NONE:
-                    printf("None ");
-                    break;
-                default:
-                    break;
-            }
+            v = evaluate(current);
+            printValue(v);
             current = current->thenNext;
         }
-         printf("\n");
+        printf("\n");
         return makeNone();
     }else if(node->type == AST_INPUT){
         Value inputAsker = evaluate(node->child);
@@ -685,17 +588,10 @@ Value evaluate(astNode* node){
             setVariable(iterator);
             // run the for loop
             Value result;
-            astNode* stmt;
             for(int i = 0;i < stringLength;i++){
                 v.data.stringData[0] = stringToTraverse.data.stringData[i];
-                stmt = node->thenBlock;
-                while(stmt){
-                    result = evaluate(stmt);
-                    if(result.isReturnedValue){
-                        return result;
-                    }
-                    stmt = stmt->thenNext;
-                }
+                result = runStatments(node->thenBlock);
+                if(result.isReturnedValue) return result;
             }
         }else{
             // get ranges
@@ -712,30 +608,17 @@ Value evaluate(astNode* node){
             setVariable(iterator);
             // run the for loop
             Value result;
-            astNode* stmt;
             int start= iterator->data->data.numData;
             if(start > range_end.data.numData){
                 for(int i = start;i > range_end.data.numData;i += range_skip.data.numData){ 
-                    stmt =  node->thenBlock;
-                    while(stmt){
-                        result = evaluate(stmt);
-                        if(result.isReturnedValue){
-                            return result;
-                        }
-                    stmt = stmt->thenNext;
-                    }
+                    result = runStatments(node->thenBlock);
+                    if(result.isReturnedValue) return result;
                     iterator->data->data.numData += range_skip.data.numData;
                 }
             }else{
                 for(int i = start;i < range_end.data.numData;i += range_skip.data.numData){ 
-                    stmt =  node->thenBlock;
-                    while(stmt){
-                        result = evaluate(stmt);
-                        if(result.isReturnedValue){
-                            return result;
-                        }
-                    stmt = stmt->thenNext;
-                    }
+                    result = runStatments(node->thenBlock);
+                    if(result.isReturnedValue) return result;
                 iterator->data->data.numData += range_skip.data.numData;
             }
         }
@@ -744,31 +627,19 @@ Value evaluate(astNode* node){
     }
     else if(node->type == AST_WHILE){
         Value condition = evaluate(node->child);
+        Value result;
         while(isTruthy(condition)){
-            astNode* stmt = node->thenBlock;
-            Value result;
-            while(stmt){
-                result = evaluate(stmt);
-                if(result.isReturnedValue){
-                    return result;
-                }
-                stmt = stmt->thenNext;
-            }
+            result = runStatments(node->thenBlock);
+            if(result.isReturnedValue) return result;
             condition = evaluate(node->child);
         }
         return makeNone();
     }else if(node->type == AST_IF){
         Value condition = evaluate(node->child);
+        Value result;
         if(isTruthy(condition)){
-            astNode* current = node->thenBlock;
-            Value result;
-            while(current != NULL){
-                result = evaluate(current);
-                if(result.isReturnedValue){
-                    return result;
-                }
-                current = current->thenNext;
-            }
+            result = runStatments(node->thenBlock);
+            if(result.isReturnedValue) return result;
         }else{
             if(node->nextBlock){
                 Value result = evaluate(node->nextBlock);
@@ -776,23 +647,15 @@ Value evaluate(astNode* node){
                     return result;
                 }
             }else if(node->elseBlock != NULL){
-                astNode* current = node->elseBlock->thenBlock;
-                Value result;
-                while(current != NULL){
-                    result = evaluate(current);
-                    if(result.isReturnedValue){
-                        return result;
-                    }
-                    current = current->thenNext;
-                }
+                Value result = runStatments(node->elseBlock->thenBlock);
+                if(result.isReturnedValue) return result;
             }
         }
         return makeNone();
     }else if(node->type == AST_FUNCTION_DECLARATION){
         Function* f = createFunction();
-        MemNode* strObj = createMemNode(strlen(node->data.stringData)+1);
-        strcpy(strObj->ptr,node->data.stringData);
-        f->functionName = strObj->ptr;
+        char* str = cloneString(node->data.stringData);
+        f->functionName = str;
         astNode* paramaters = node->param;
         Param* head = NULL;
         Param* tail = NULL;
@@ -849,7 +712,7 @@ Value evaluate(astNode* node){
         Value result;
         while(stmt != NULL){
             result = evaluate(stmt);
-            if(result.isReturnedValue && result.isReturnedValue == true){
+            if(result.isReturnedValue){
                 result.isReturnedValue = false;
                 popCallStackNode();
                 return result;
@@ -886,7 +749,6 @@ Value evaluate(astNode* node){
     }
     return makeNone();
 }
-
 
 void Execute(){
     astNode* cur = ast_root;
