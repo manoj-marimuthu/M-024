@@ -1,5 +1,5 @@
-curl tester
-curl math
+mount tester
+mount math
 
 # The following test file provides a range of test cases to
 # to test the functions provided by the math library

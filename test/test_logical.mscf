@@ -1,4 +1,4 @@
-curl tester
+mount tester
 
 # The following test file provides a range of test cases for
 # boolean operations such as and, or, not.

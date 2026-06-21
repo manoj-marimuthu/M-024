@@ -1,4 +1,4 @@
-curl tester
+mount tester
 
 # This test file provides a range of test cases for checking
 # the behaviour of the type() built-in function for a variety

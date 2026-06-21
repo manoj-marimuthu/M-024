@@ -12,7 +12,7 @@
 #include <globals.h>
 #include <imports.h>
  
-static void printValue(Value v){
+void printValue(Value v){
     switch(v.type){
         case D_NUMBER:
             if(floor(v.data.numData) == v.data.numData){
@@ -41,7 +41,7 @@ static void printValue(Value v){
     printf(" ");
 }
 
-static double toNumber(Value val){
+double toNumber(Value val){
     switch(val.type){
         case D_NUMBER:
             return val.data.numData;
@@ -54,7 +54,7 @@ static double toNumber(Value val){
             break;
     }
 }
-static double strictToNumber(Value val,int lineCount){
+double strictToNumber(Value val,int lineCount){
     // api for division with checks
     double result = toNumber(val);
     if(result == 0){
@@ -63,7 +63,7 @@ static double strictToNumber(Value val,int lineCount){
     return result;
 }
 
-static char* cloneString(char* str){
+char* cloneString(char* str){
     int size = strlen(str) + 1;
     MemNode* strObj = createMemNode(size);
     strcpy(strObj->ptr,str);
@@ -71,35 +71,35 @@ static char* cloneString(char* str){
 }
 
 
-static Value makeNone(){
+Value makeNone(){
     Value v;
     v.isReturnedValue= false;
     v.type = D_NONE;
     return v;
 }
 
-static Value makeNumber(double num){
+Value makeNumber(double num){
     Value v;
     v.type = D_NUMBER;
     v.data.numData = num;
     return v;
 }
 
-static Value makeBoolean(bool boolean){
+Value makeBoolean(bool boolean){
     Value v;
     v.type = D_BOOLEAN;
     v.data.boolData = boolean;
     return v;
 }
 
-static Value makeString(char* str){
+Value makeString(char* str){
     Value v;
     v.type = D_STRING;
     v.data.stringData = cloneString(str);
     return v;
 }
 
-static bool isTruthy(Value val){
+bool isTruthy(Value val){
     switch(val.type){
         case D_NUMBER:
             return val.data.numData != 0;
@@ -113,7 +113,7 @@ static bool isTruthy(Value val){
             return false;
     }
 }
-static Value runStatments(astNode* node){
+Value runStatments(astNode* node){
     astNode* cur = node;
     Value result;
     while(cur){
@@ -125,9 +125,26 @@ static Value runStatments(astNode* node){
     }
     return makeNone();
 }
-static Value evaluate(astNode* node){
+Value evaluate(astNode* node){
    if(node->type == AST_STRING){
-        Value v = makeString(node->data.stringData);
+        Value v;
+        if(node->isIndexed){
+            char s[2];
+            Value indexVal = evaluate(node->nextIndex);
+            if(indexVal.type != D_NUMBER) error("Indexing a string with a non-number data type is illegal",node->lineCount,RUN_TIME_ERROR);
+            int index = indexVal.data.numData;
+            int n = strlen(node->data.stringData);
+            if(index < 0) index = n + index;
+            if(index < 0 || index >= n){
+                error("Invalid index for string indexing",node->lineCount,RUN_TIME_ERROR);
+            }
+            s[0] = node->data.stringData[index];
+            s[1] = '\0';
+            v = makeString(s);
+            if(node->nextIndex && node->nextIndex->nextIndex) error("Indexing of a string is one dimensional",node->lineCount,RUN_TIME_ERROR);
+        }else{
+            v = makeString(node->data.stringData);
+        }
         return v;     
    }
    else if(node->type == AST_NUMBER){
@@ -150,6 +167,26 @@ static Value evaluate(astNode* node){
         Variable* variable = getVariable(node->data.stringData);
         Value * var = variable->data;
         Value result;
+        if(node->isIndexed && (var->type != D_STRING)){
+            error("Indexing an object which is neither a list nor a string is illegal",node->lineCount,RUN_TIME_ERROR);
+        }
+        // logic for indexing an identifier (ie variable)
+        if(node->isIndexed){
+            if(var->type == D_STRING){
+                char s[2];
+                Value indexVal = evaluate(node->nextIndex);
+                if(indexVal.type != D_NUMBER) error("Invalid datatype for an index",node->lineCount,RUN_TIME_ERROR);
+                int index = indexVal.data.numData;
+                int n = strlen(var->data.stringData);
+                if(index < 0) index = n + index;
+                if(index < 0 || index >= n) error("Invalid index for indexing a string",node->lineCount,RUN_TIME_ERROR);
+                s[0] =  var->data.stringData[index];
+                s[1] = '\0';
+                result = makeString(s);
+                return result;
+            }
+        }
+
         if(var->type == D_STRING){
             result = makeString(var->data.stringData); 
         }else if(var->type == D_NUMBER){
@@ -210,7 +247,7 @@ static Value evaluate(astNode* node){
                     if(right.data.numData <= 0 || floor(right.data.numData) != right.data.numData){
                         error("String replication is illegal with 0 or negative numbers",node->lineCount,RUN_TIME_ERROR);
                     }
-                    char result[strlen(left.data.stringData) + (int) right.data.numData + 1];
+                    char result[strlen(left.data.stringData) * (int) right.data.numData + 1];
                     for(int i =0;i < right.data.numData;i++){
                         if(i == 0) strcpy(result,left.data.stringData);
                         else strcat(result,left.data.stringData);
@@ -250,7 +287,7 @@ static Value evaluate(astNode* node){
                     (left.type == D_NUMBER && right.type == D_BOOLEAN) ||
                     (left.type == D_BOOLEAN && right.type == D_NUMBER)
                 ){
-                    v = makeNumber((int) toNumber(left) % (int) toNumber(right));
+                    v = makeNumber((int) toNumber(left) % (int) strictToNumber(right,node->lineCount));
                 }
                 else{
                     error("Incorrect Usage of '%' (modulus) operator",node->lineCount,RUN_TIME_ERROR);
@@ -293,10 +330,10 @@ static Value evaluate(astNode* node){
         Value v;
         v.type = D_BOOLEAN;
         if(rhs.type != D_STRING){
-            error("'in' operator requires a string in the right-hand side",current->lineCount,RUN_TIME_ERROR);
+            error("'in' operator requires a string in the right-hand side",node->lineCount,RUN_TIME_ERROR);
         }
         if(lhs.type != D_STRING){
-            error("'in' operator requires a string in the left-hand side",current->lineCount,RUN_TIME_ERROR);
+            error("'in' operator requires a string in the left-hand side",node->lineCount,RUN_TIME_ERROR);
         }
         if(strstr(rhs.data.stringData,lhs.data.stringData) != NULL){
             v.data.boolData = true;
@@ -316,7 +353,7 @@ static Value evaluate(astNode* node){
                     (left.type == D_NUMBER && right.type == D_BOOLEAN) ||
                     (left.type == D_BOOLEAN && right.type == D_NUMBER)
                 ){
-                    v = makeNumber(toNumber(left) > toNumber(right));
+                    v = makeBoolean(toNumber(left) > toNumber(right));
                 }
         else{
             error("Incorrect Usage of '>' operator",node->lineCount,RUN_TIME_ERROR);
@@ -334,7 +371,7 @@ static Value evaluate(astNode* node){
                     (left.type == D_NUMBER && right.type == D_BOOLEAN) ||
                     (left.type == D_BOOLEAN && right.type == D_NUMBER)
                 ){
-                    v = makeNumber(toNumber(left) < toNumber(right));
+                    v = makeBoolean(toNumber(left) < toNumber(right));
                 }
         else{
             error("Incorrect Usage of '<' operator",node->lineCount,RUN_TIME_ERROR);
@@ -352,7 +389,7 @@ static Value evaluate(astNode* node){
                     (left.type == D_NUMBER && right.type == D_BOOLEAN) ||
                     (left.type == D_BOOLEAN && right.type == D_NUMBER)
                 ){
-                    v = makeNumber(toNumber(left) >= toNumber(right));
+                    v = makeBoolean(toNumber(left) >= toNumber(right));
                 }
         else{
             error("Incorrect Usage of '>=' operator",node->lineCount,RUN_TIME_ERROR);
@@ -369,7 +406,7 @@ static Value evaluate(astNode* node){
                     (left.type == D_NUMBER && right.type == D_BOOLEAN) ||
                     (left.type == D_BOOLEAN && right.type == D_NUMBER)
                 ){
-                    v = makeNumber(toNumber(left) <= toNumber(right));
+                    v = makeBoolean(toNumber(left) <= toNumber(right));
                 }
         else{
             error("Incorrect Usage of '<=' operator",node->lineCount,RUN_TIME_ERROR);
@@ -388,7 +425,7 @@ static Value evaluate(astNode* node){
                     (left.type == D_NUMBER && right.type == D_BOOLEAN) ||
                     (left.type == D_BOOLEAN && right.type == D_NUMBER)
                 ){
-                    v = makeNumber(toNumber(left) == toNumber(right));
+                    v = makeBoolean(toNumber(left) == toNumber(right));
         }
         else if(left.type == D_NONE && right.type == D_NONE){
             v = makeBoolean(true);
@@ -414,7 +451,7 @@ static Value evaluate(astNode* node){
                     (left.type == D_NUMBER && right.type == D_BOOLEAN) ||
                     (left.type == D_BOOLEAN && right.type == D_NUMBER)
                 ){
-                    v = makeNumber(toNumber(left) != toNumber(right));
+                    v = makeBoolean(toNumber(left) != toNumber(right));
         }
         else if((left.type == D_NONE && right.type != D_NONE) || (left.type != D_NONE && right.type == D_NONE)){
             v = makeBoolean(true);
@@ -739,7 +776,7 @@ static Value evaluate(astNode* node){
         }
         return makeNone();
     }
-    else if(node->type == AST_CURL){
+    else if(node->type == AST_MOUNT){
         char* fileName = node->data.stringData;
         if(isAlreadyLoaded(fileName)) return makeNone();
         GlobalsCopy copy = copy_state();
