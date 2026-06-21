@@ -1,4 +1,4 @@
-curl tester
+mount tester
 
 # The following test file tests the for loop feature for
 # the different cases such as integer range looping and

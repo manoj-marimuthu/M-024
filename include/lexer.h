@@ -44,7 +44,7 @@ typedef enum {
     NONE,
     RETURN,
     FUNCTION,
-    CURL,
+    MOUNT,
     FOR,
     IN,
     KILL

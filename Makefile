@@ -11,7 +11,8 @@ OBJ = build/interpret.o \
 	build/evaluate.o \
 	build/callStack.o \
 	build/globals.o \
-	build/imports.o
+	build/imports.o \
+	build/listobj.o
 
 ifeq ($(OS),Windows_NT)
 	TARGET = M024.exe
@@ -46,5 +47,7 @@ build/globals.o : scripts/globals.c
 	$(COMMAND) -c scripts/globals.c -o build/globals.o
 build/imports.o : scripts/imports.c
 	$(COMMAND) -c scripts/imports.c -o build/imports.o
+build/listobj.o : scripts/listobj.c
+	$(COMMAND) -c scripts/listobj.c -o build/listobj.o
 clean:
 	$(CLEAN)

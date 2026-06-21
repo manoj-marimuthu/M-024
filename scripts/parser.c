@@ -29,6 +29,7 @@ astNode* createAstNode(){
     temp->isConstant = false;
     temp->isStringLoop = false;
     temp->isVariableTraversal = false;
+    temp->isIndexed = false;
     return temp;
 }
 void consume(){
@@ -52,6 +53,26 @@ astNode* parseAtom(){
         node->data.stringData = gcObj->ptr;
         strcpy(node->data.stringData,current->data.strData);
         consume();
+        if(current && current->type == L_SQUARE_BRACK){
+            node->isIndexed = true;
+            astNode* head = NULL;
+            astNode* tail = NULL;
+            astNode* indexNode = NULL;
+            while(current && current->type == L_SQUARE_BRACK){
+                consume(); // for [
+                indexNode = parseExpression();
+                consume(); // for ]
+                if(head == NULL){
+                    head = indexNode;
+                    tail = indexNode;
+                }else{
+                    tail->nextIndex = indexNode;
+                    tail = tail->nextIndex;
+                }
+            }
+            node->nextIndex = head; 
+            return node;
+        }
         return node;
     }
     else if(current && current->type == BOOLEAN){
@@ -67,7 +88,7 @@ astNode* parseAtom(){
         consume();
         return node;
     }
-    else if(current->type == IDENTIFIER && current->next->type == L_BRACK) return parseCallFunction();
+    else if(current && current->type == IDENTIFIER && (current->next && current->next->type == L_BRACK)) return parseCallFunction();
     else if(current && current->type == IDENTIFIER){
         astNode* node = createAstNode();
         node->type = AST_IDENTIFIER;
@@ -75,6 +96,31 @@ astNode* parseAtom(){
         node->data.stringData = gcObj->ptr;
         strcpy(node->data.stringData,current->data.strData);
         consume();
+        if(current && current->type == L_SQUARE_BRACK){
+            node->isIndexed = true;
+            astNode* head = NULL;
+            astNode* tail = NULL;
+            astNode* indexNode = NULL;
+            while(current && current->type == L_SQUARE_BRACK){
+                consume(); // for [
+                indexNode = parseExpression();
+                // for ]
+                if(current && current->type == R_SQUARE_BRACK){
+                    consume();   
+                }else{
+                    error("Missing ']' for the list",current ? current->lineCount : -1,SYNTAX_ERROR);
+                } 
+                if(head == NULL){
+                    head = indexNode;
+                    tail = indexNode;
+                }else{
+                    tail->nextIndex = indexNode;
+                    tail = tail->nextIndex;
+                }
+            }
+            node->nextIndex = head;
+            return node;
+        }
         return node;
     }
     else if(current && current->type == L_BRACK){
@@ -100,6 +146,21 @@ astNode* parseAtom(){
         return NULL;
     }
 }
+
+astNode* parseIndex(){
+    if(current && current->type == L_SQUARE_BRACK){
+        consume();
+        astNode* indexNode = parseExpression();
+        indexNode->type = AST_INDEX;
+        if(current && current->type == R_SQUARE_BRACK){
+            consume();
+        }else{
+            error("Missing ']' while indexing a string/list object",current->lineCount,SYNTAX_ERROR);
+        }
+        return indexNode;
+    }
+    return NULL;
+}
 astNode* parseUnary(){
     if(current && current->type == OPERATOR && (current->data.charData == '+' || current->data.charData == '-')){
         astNode* node = createAstNode();
@@ -118,7 +179,7 @@ astNode* parseUnary(){
 }
 astNode* parseExponent(){
     astNode* lhs = parseUnary();
-    while(current != NULL && (current->type != R_BRACK && current->type != GT && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE && current->type != COLON) && current->type == OPERATOR && (current->data.charData == '^')){
+    while(current != NULL && (current->type != R_SQUARE_BRACK && current->type != R_BRACK && current->type != GT && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE && current->type != COLON) && current->type == OPERATOR && (current->data.charData == '^')){
         astNode* parent = createAstNode();
         parent->data.charData = '^';
         parent->type = AST_OPERATOR;
@@ -132,7 +193,7 @@ astNode* parseExponent(){
 }
 astNode* parseAddSub(){
     astNode* lhs = parseMulDivMod();
-    while(current != NULL && ( current->type != R_BRACK && current->type != GT && current->type != COLON && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && current->type == OPERATOR && (current->data.charData == '+' || current->data.charData == '-')){
+    while(current != NULL && (current->type != R_SQUARE_BRACK &&  current->type != R_BRACK && current->type != GT && current->type != COLON && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && current->type == OPERATOR && (current->data.charData == '+' || current->data.charData == '-')){
         astNode* parent = createAstNode();
         parent->type = AST_OPERATOR;
         parent->data.charData = current->data.charData;
@@ -147,7 +208,7 @@ astNode* parseAddSub(){
 astNode* parseMulDivMod(){
     astNode* lhs = parseExponent();
     if(lhs == NULL) error("Undefined Error While Evaluating Expression",current->lineCount,RUN_TIME_ERROR);
-    while(current != NULL && ( current->type != R_BRACK && current->type != GT && current->type != COLON && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && current->type == OPERATOR && (current->data.charData == '*' || current->data.charData == '/' || current->data.charData == '%')){
+    while(current != NULL && (current->type != R_SQUARE_BRACK &&  current->type != R_BRACK && current->type != GT && current->type != COLON && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && current->type == OPERATOR && (current->data.charData == '*' || current->data.charData == '/' || current->data.charData == '%')){
         astNode* parent = createAstNode();
         parent->type = AST_OPERATOR;
         parent->data.charData = current->data.charData;
@@ -164,7 +225,7 @@ astNode* parseMulDivMod(){
 astNode* parseComparator(){
     astNode* lhs = parseAddSub();
     if(lhs == NULL) error("Unexpected Error While Parsing Comparators",current->lineCount,RUN_TIME_ERROR);
-    while(current != NULL && (current->type != R_BRACK && current->type != COLON && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && (current->type == EQ || current->type == NEQ || current->type == GT || current->type == LT || current->type == GEQ || current->type == LEQ)){
+    while(current != NULL && (current->type != R_SQUARE_BRACK &&  current->type != R_BRACK && current->type != COLON && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && (current->type == EQ || current->type == NEQ || current->type == GT || current->type == LT || current->type == GEQ || current->type == LEQ)){
         if(current && current->type == GT && current->next->type == COLON) break;
         astNode* parent = createAstNode();
         switch(current->type){
@@ -187,8 +248,8 @@ astNode* parseComparator(){
 
 astNode* parseAndOr(){
     astNode* lhs = parseComparator();
-    if(lhs == NULL) error("Unexpected Error While Parsing",lhs->lineCount,RUN_TIME_ERROR);
-    while(current != NULL && (current->type != R_BRACK && current->type != GT && current->type != COLON && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && (current->type == AND || current->type == OR)){
+    if(lhs == NULL) error("Unexpected Error While Parsing",current ? current->lineCount : -1,RUN_TIME_ERROR);
+    while(current != NULL && (current->type != R_SQUARE_BRACK &&  current->type != R_BRACK && current->type != GT && current->type != COLON && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && (current->type == AND || current->type == OR)){
         astNode* parent = createAstNode();
         if(current->type == AND) parent->type = AST_AND;
         else parent->type = AST_OR;
@@ -819,19 +880,19 @@ astNode* parseKill(){
     }
     return NULL;
 }
-astNode* parseCurl(){
+astNode* parseMount(){
     skipNewline();
-    if(current && current->type == CURL){
+    if(current && current->type == MOUNT){
         consume();
         astNode* node = createAstNode();
-        node->type = AST_CURL;
-        if(current->type == STRING){   
+        node->type = AST_MOUNT;
+        if(current && current->type == STRING){   
             MemNode* strObj = createMemNode(strlen(current->data.strData) + 1);
             strcpy(strObj->ptr,current->data.strData);
             node->data.stringData = strObj->ptr;
             consume();
             return node;
-        }else if(current->type == IDENTIFIER){
+        }else if(current && current->type == IDENTIFIER){
             MemNode* strObj = createMemNode(strlen(current->data.strData) + 10);
             strcpy(strObj->ptr,"lib/");
             strcat(strObj->ptr,current->data.strData);
@@ -841,7 +902,7 @@ astNode* parseCurl(){
             return node;
         }
         else{
-            error("Unidentified object located after 'curl' keyword. Use a valid string which denotes a filename",current->lineCount,SYNTAX_ERROR);
+            error("Unidentified object located after 'mount' keyword. Use a valid string which denotes a filename",current->lineCount,SYNTAX_ERROR);
             return NULL;
         }
     }else{
@@ -852,7 +913,7 @@ astNode* parseBlock(){
     skipNewline();
     LexerNode* node = current;
     if(node == NULL){
-        error("Undefined Error While Parsing",current->lineCount,RUN_TIME_ERROR);
+        error("Undefined Error While Parsing",current ? current->lineCount : -1,RUN_TIME_ERROR);
     }
     if(node->type == PRINT  || node->type == INPUT) return parseIO();
     else if(node->type == IF) return parseIf();
@@ -862,7 +923,7 @@ astNode* parseBlock(){
     else if(node->type == IDENTIFIER || node->type == CONST) return parseVarDec();
     else if(node->type == FUNCTION) return parseFunction();
     else if(node->type == RETURN) return parseReturn();
-    else if(node->type == CURL) return parseCurl();
+    else if(node->type == MOUNT) return parseMount();
     else if(node->type == KILL) return parseKill();
     else{ 
         error("Undefined Statement Found While Parsing",current->lineCount,RUN_TIME_ERROR);

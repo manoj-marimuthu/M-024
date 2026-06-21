@@ -172,8 +172,8 @@ void line_lexer(char* line,int lineCount,Stack* stk){
                 }else if(strcmp(temp->data.strData,"return") == 0){
                     temp->type = RETURN;
                 }
-                else if(strcmp(temp->data.strData,"curl") == 0){
-                    temp->type = CURL;
+                else if(strcmp(temp->data.strData,"mount") == 0){
+                    temp->type = MOUNT;
                 }
                 else{
                     temp->type = IDENTIFIER;

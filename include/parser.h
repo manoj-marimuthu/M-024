@@ -37,7 +37,7 @@ typedef enum{
     AST_INDEX,
     AST_LEN,
     AST_TYPE,
-    AST_CURL,
+    AST_MOUNT,
     AST_FOR,
     AST_UPLUS,
     AST_UMINUS,
@@ -67,16 +67,18 @@ typedef struct astNode{
     struct astNode* range_start;
     struct astNode* range_end;
     struct astNode* range_skip;
+    struct astNode* nextIndex;
     int lineCount;
     bool isConstant;
     bool isStringLoop;
+    bool isIndexed;
     bool isVariableTraversal;
 } astNode;
 
 astNode* createAstNode();
 void consume();
 astNode* parseBlock();
-astNode* parseCurl();
+astNode* parseMount();
 astNode* parseFunction();
 astNode* parseCallFunction();
 astNode* parseParameters();
@@ -95,6 +97,7 @@ astNode* parseAddSub();
 astNode* parseUnary();
 astNode* parseMulDivMod();
 astNode* parseAtom();
+astNode* parseIndex();
 astNode* parseKill();
 void Parser();
 
