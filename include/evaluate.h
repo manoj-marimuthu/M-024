@@ -6,7 +6,7 @@
 #include <stdbool.h>
 #include <memoryHandler.h>
 #include <variableRegistry.h>
-
+#include <listobj.h>
 Value evaluate(astNode* node);
 Value makeNone();
 Value makeNumber(double num);
@@ -16,6 +16,8 @@ void printValue(Value v);
 char* cloneString(char* str);
 bool isTruthy(Value val);
 double toNumber(Value val);
+ListNode* valueToListNode(Value v);
+Value listNodeToValue(ListNode* listNode);
 void Execute();
 void interpret(char* fileName);
 #endif

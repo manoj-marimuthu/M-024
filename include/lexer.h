@@ -47,6 +47,7 @@ typedef enum {
     MOUNT,
     FOR,
     IN,
+    POP,
     KILL
 } LexerNodeType;
 

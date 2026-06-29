@@ -19,3 +19,5 @@ echo function kill Test
 M024.exe "test/test_function_kill.mscf"
 echo variable kill Test
 M024.exe "test/test_variable_kill.mscf"
+echo list Test
+M024.exe "test/test_list.mscf"

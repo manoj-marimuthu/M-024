@@ -1,3 +1,4 @@
+mount math
 fn log_success(test_name):
     log_msg = "[OK] " + test_name
     print(log_msg)

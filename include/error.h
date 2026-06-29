@@ -1,10 +1,11 @@
 #ifndef ERROR_H
 #define ERROR_H
-#define RED         "\033[31m"
-#define GREEN       "\033[32m"
-#define YELLOW      "\033[33m"
-#define BLUE        "\033[34m"
-#define BOLD        "\033[1m"
+#define RED     "\033[31m"
+#define GREEN   "\033[32m"
+#define YELLOW  "\033[33m"
+#define BLUE    "\033[34m"
+#define BOLD    "\033[1m"
+#define PURPLE  "\033[1;35m"
 #define UNDERLINE   "\033[4m"
 #define RESET       "\033[0m"
 typedef enum{
@@ -20,5 +21,7 @@ typedef enum{
     INDEXING_ERROR,
     IMPORT_ERROR
 } ErrorType;
+
 void error(char* line,int lineCount,ErrorType type);
+
 #endif

@@ -21,15 +21,20 @@ astNode* createAstNode(){
     temp->thenBlock = NULL;
     temp->elseBlock = NULL;
     temp->astChain = NULL;
+    temp->nextIndex = NULL;
     temp->param_length = 0;
     temp->index = 0;
     temp->lineCount = current->lineCount;
+    temp->nextListElement = NULL;
     temp->param = NULL;
     temp->nextParam = NULL;
     temp->isConstant = false;
     temp->isStringLoop = false;
     temp->isVariableTraversal = false;
     temp->isIndexed = false;
+    temp->range_start = NULL;
+    temp->range_end = NULL;
+    temp->range_skip = NULL;
     return temp;
 }
 void consume(){
@@ -46,6 +51,9 @@ astNode* parseAtom(){
         consume();
         return node;
     }
+    else if(current && current->type == OPERATOR && (current->data.charData =='+' || current->data.charData == '-')){
+        return parseUnary();
+    }
     else if(current && current->type == STRING){
         astNode* node = createAstNode();
         node->type = AST_STRING;
@@ -61,7 +69,11 @@ astNode* parseAtom(){
             while(current && current->type == L_SQUARE_BRACK){
                 consume(); // for [
                 indexNode = parseExpression();
-                consume(); // for ]
+                if(current && current->type == R_SQUARE_BRACK){
+                    consume();   
+                }else{
+                    error("Missing ']' for the list",current->lineCount,SYNTAX_ERROR);
+                }
                 if(head == NULL){
                     head = indexNode;
                     tail = indexNode;
@@ -73,6 +85,15 @@ astNode* parseAtom(){
             node->nextIndex = head; 
             return node;
         }
+        return node;
+    }
+    else if(current && current->type == L_BRACK){
+        consume();
+        astNode* node = parseExpression();
+        if(current && current->type != R_BRACK){
+            error("Missing ')' in possible expression",current->lineCount,SYNTAX_ERROR);
+        }
+        consume();
         return node;
     }
     else if(current && current->type == BOOLEAN){
@@ -108,8 +129,8 @@ astNode* parseAtom(){
                 if(current && current->type == R_SQUARE_BRACK){
                     consume();   
                 }else{
-                    error("Missing ']' for the list",current ? current->lineCount : -1,SYNTAX_ERROR);
-                } 
+                    error("Missing ']' for the list",current->lineCount,SYNTAX_ERROR);
+                }
                 if(head == NULL){
                     head = indexNode;
                     tail = indexNode;
@@ -123,17 +144,62 @@ astNode* parseAtom(){
         }
         return node;
     }
-    else if(current && current->type == L_BRACK){
+    else if(current && current->type == L_SQUARE_BRACK){
         consume();
-        if(current == NULL){
-            error("Unexpected Error While Parsing",current->lineCount,RUN_TIME_ERROR);
+        if(current == NULL) error("undefined error while parsing a possible list object",current->lineCount,COMPILE_TIME_ERROR);
+        astNode* node = createAstNode();
+        astNode* head = NULL;
+        astNode* tail = NULL;
+        node->type = AST_LIST;
+        while(current && current->type != R_SQUARE_BRACK){
+            astNode* listval = parseExpression();
+            if(head == NULL){
+                head = listval;
+                tail = listval;
+            }else{
+                tail->nextListElement = listval;
+                tail = listval;
+            }
+            if(current && current->type == COMMA){
+                consume();
+            }
         }
-        astNode* node = parseExpression();
-        if(current->type != R_BRACK){
-            error("Missing ')' in Expression",current->lineCount,SYNTAX_ERROR);
+        if(current && current->type == R_SQUARE_BRACK){
+            consume();
+        }else{
+            error("list declaration requires an enclosing ']' as per syntax",current->lineCount,SYNTAX_ERROR);
         }
-        consume();
+        node->child = head;
+        if(current && current->type == L_SQUARE_BRACK){
+            node->isIndexed = true;
+            astNode* head = NULL;
+            astNode* tail = NULL;
+            astNode* indexNode = NULL;
+            while(current && current->type == L_SQUARE_BRACK){
+                consume(); // for [
+                indexNode = parseExpression();
+                if(current && current->type == R_SQUARE_BRACK){
+                    consume();   
+                }else{
+                    error("Missing ']' for the list",current->lineCount,SYNTAX_ERROR);
+                }
+                if(head == NULL){
+                    head = indexNode;
+                    tail = indexNode;
+                }else{
+                    tail->nextIndex = indexNode;
+                    tail = tail->nextIndex;
+                }
+            }
+            node->nextIndex = head; 
+            skipNewline();
+            return node;
+        }
+        skipNewline();
         return node;
+    }
+    else if(current && current->type == POP){
+        return parsePop();
     }
     else if(current && (current->type == INPUT || current->type == PRINT)){
         return parseIO();
@@ -142,7 +208,8 @@ astNode* parseAtom(){
         return parseTypeFunction();
     }
     else{
-        error("Undefined error while parsing (Check Indentations / Syntax)\n",current->lineCount,RUN_TIME_ERROR);
+        printf("%d",current->type);
+        error("Undefined error when parsing (Check indentations / syntax)\n",current->lineCount,RUN_TIME_ERROR);
         return NULL;
     }
 }
@@ -161,36 +228,38 @@ astNode* parseIndex(){
     }
     return NULL;
 }
-astNode* parseUnary(){
-    if(current && current->type == OPERATOR && (current->data.charData == '+' || current->data.charData == '-')){
-        astNode* node = createAstNode();
-        if(current->data.charData == '+'){
-            consume();
-            node->type = AST_UPLUS;
-            node->child = parseAtom();
-        }else{
-            consume();
-            node->type = AST_UMINUS;
-            node->child = parseAtom();  
-        }
-        return node;
-    }
-    return parseAtom();
-}
 astNode* parseExponent(){
-    astNode* lhs = parseUnary();
+    astNode* lhs = parseAtom();
     while(current != NULL && (current->type != R_SQUARE_BRACK && current->type != R_BRACK && current->type != GT && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE && current->type != COLON) && current->type == OPERATOR && (current->data.charData == '^')){
         astNode* parent = createAstNode();
         parent->data.charData = '^';
         parent->type = AST_OPERATOR;
         consume();
-        astNode* rhs = parseUnary();
+        astNode* rhs = parseAtom();
         parent->left = lhs;
         parent->right = rhs;
         lhs = parent;
     }
     return lhs;
 }
+
+astNode* parseUnary(){
+    if(current && current->type == OPERATOR && (current->data.charData == '+' || current->data.charData == '-')){
+        astNode* node = createAstNode();
+        if(current->data.charData == '+'){
+            consume();
+            node->type = AST_UPLUS;
+            node->child = parseExponent();
+        }else{
+            consume();
+            node->type = AST_UMINUS;
+            node->child = parseExponent();  
+        }
+        return node;
+    }
+    return parseExponent();
+}
+
 astNode* parseAddSub(){
     astNode* lhs = parseMulDivMod();
     while(current != NULL && (current->type != R_SQUARE_BRACK &&  current->type != R_BRACK && current->type != GT && current->type != COLON && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && current->type == OPERATOR && (current->data.charData == '+' || current->data.charData == '-')){
@@ -222,14 +291,40 @@ astNode* parseMulDivMod(){
     return lhs;
 }
 
-astNode* parseComparator(){
+astNode* parseEquality(){
     astNode* lhs = parseAddSub();
+    while(current != NULL && (current->type != R_SQUARE_BRACK &&  current->type != R_BRACK && current->type != COLON && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && (current->type == EQ)){
+        astNode* parent = createAstNode();
+        parent->type = AST_EQ;
+        consume();
+        astNode* rhs = parseAddSub();
+        parent->left = lhs;
+        parent->right = rhs;
+        lhs = parent;
+    }
+    return lhs;
+}
+astNode* parseIn(){
+    astNode* lhs = parseEquality();
+    if(current && current->type == IN){
+        consume();
+        astNode* rhs = parseEquality();
+        astNode* in_node = createAstNode();
+        in_node->left = lhs;
+        in_node->right = rhs;
+        in_node->type = AST_IN;
+        return in_node;
+    }
+    return lhs;
+}
+
+astNode* parseComparator(){
+    astNode* lhs = parseIn();
     if(lhs == NULL) error("Unexpected Error While Parsing Comparators",current->lineCount,RUN_TIME_ERROR);
     while(current != NULL && (current->type != R_SQUARE_BRACK &&  current->type != R_BRACK && current->type != COLON && current->type != DEDENT && current->type != COMMA && current->type != NEWLINE ) && (current->type == EQ || current->type == NEQ || current->type == GT || current->type == LT || current->type == GEQ || current->type == LEQ)){
         if(current && current->type == GT && current->next->type == COLON) break;
         astNode* parent = createAstNode();
         switch(current->type){
-            case EQ:parent->type = AST_EQ;break;
             case NEQ:parent->type = AST_NEQ;break;
             case GT:parent->type = AST_GT;break;
             case LT:parent->type = AST_LT;break;
@@ -238,7 +333,7 @@ astNode* parseComparator(){
             default:break;
         }
         consume();
-        astNode* rhs = parseAddSub();
+        astNode* rhs = parseIn();
         parent->left = lhs;
         parent->right = rhs;
         lhs = parent;
@@ -261,19 +356,7 @@ astNode* parseAndOr(){
     }
     return lhs;
 }
-astNode* parseIn(){
-    astNode* lhs = parseAndOr();
-    if(current && current->type == IN){
-        consume();
-        astNode* rhs = parseAndOr();
-        astNode* in_node = createAstNode();
-        in_node->left = lhs;
-        in_node->right = rhs;
-        in_node->type = AST_IN;
-        return in_node;
-    }
-    return lhs;
-}
+
 astNode* parseNot(){
     if(current && current->type == NOT){
         astNode* parent = createAstNode();
@@ -283,7 +366,7 @@ astNode* parseNot(){
         parent->child = child;
         return parent;
     }
-    return parseIn();
+    return parseAndOr();
 }
 
 astNode* parseExpression(){
@@ -453,7 +536,7 @@ astNode* parseVarDec(){
     if(current && (current->type == IDENTIFIER || current->type == CONST)){
         bool isConstant = false;
         if(current && current->type == CONST) {isConstant = true;consume();}
-        if(current && current->type != IDENTIFIER) error("Using 'final' Keyword Without Identifier",current->lineCount,SYNTAX_ERROR);
+        if(current && current->type != IDENTIFIER) error("Using 'const' Keyword without identifier is prohibited",current->lineCount,SYNTAX_ERROR);
         astNode* node = createAstNode();
         astNode* name = createAstNode();
         node->type = AST_ASSIGNMENT;
@@ -464,6 +547,28 @@ astNode* parseVarDec(){
         strcpy(name->data.stringData,current->data.strData);
         node->left = name;
         consume();
+        if(current && current->type == L_SQUARE_BRACK){
+            node->isIndexed = true;
+            astNode* head  = NULL;
+            astNode* tail = NULL;
+            while(current && current->type == L_SQUARE_BRACK){
+                consume();
+                astNode* indexVal = parseExpression();
+                if(head == NULL){
+                    head = indexVal;
+                    tail = indexVal;
+                }else{
+                    tail->nextIndex = indexVal;
+                    tail = indexVal;
+                }
+                if(current && current->type == R_SQUARE_BRACK){
+                    consume();
+                }else{
+                    error("Missing ']' while assigning a index of an object",current->lineCount,SYNTAX_ERROR);
+                }
+            }
+            node->child = head;
+        }
         if(current && current->type != EQUALS){
             error("Missing '=' in a variable/constant declaration",current->lineCount,SYNTAX_ERROR);
         }
@@ -650,6 +755,18 @@ astNode* parseForLoop(){
     return NULL;
 }
 
+astNode* parsePop(){
+    if(current && current->type == POP){
+        consume();
+        astNode* node = createAstNode();
+        node->type = AST_POP;
+        node->child = parseExpression();
+        skipNewline();
+        return node;
+    }else{
+        return NULL;
+    }
+}
 astNode* parseIf(){
     if(current && (current->type == IF || current->type == ELIF)){
         consume();
@@ -925,6 +1042,7 @@ astNode* parseBlock(){
     else if(node->type == RETURN) return parseReturn();
     else if(node->type == MOUNT) return parseMount();
     else if(node->type == KILL) return parseKill();
+    else if(node->type == POP) return parsePop();
     else{ 
         error("Undefined Statement Found While Parsing",current->lineCount,RUN_TIME_ERROR);
         return NULL;

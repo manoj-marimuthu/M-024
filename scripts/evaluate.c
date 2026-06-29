@@ -1,5 +1,6 @@
 #include <evaluate.h>
 #include <parser.h>
+#include <interpret_api.h>
 #include <memoryHandler.h>
 #include <error.h>
 #include <stdlib.h>
@@ -11,8 +12,12 @@
 #include <callStack.h>
 #include <globals.h>
 #include <imports.h>
- 
+#include <listobj.h>
+#include <value.h>
+#include <index.h>
+
 void printValue(Value v){
+    ListNode* curListElement = NULL;
     switch(v.type){
         case D_NUMBER:
             if(floor(v.data.numData) == v.data.numData){
@@ -35,12 +40,62 @@ void printValue(Value v){
         case D_NONE:
             printf("None");
             break;
+        case D_LIST:
+            curListElement = v.data.listData->top;
+            printf("[");
+            while(curListElement){
+                Value listElementValue = listNodeToValue(curListElement);
+                printValue(listElementValue);
+                if(curListElement && curListElement->next != NULL) printf(",");
+                curListElement = curListElement->next;
+            }
+            printf("]");
+            break;
         default:
-        break;
+            break;
     }
-    printf(" ");
 }
-
+bool valueEqual(Value v1,Value v2){
+    if(v1.type == v2.type){
+        ListNode *lhsCur,*rhsCur;
+        switch(v1.type){
+            case D_STRING:
+                return !strcmp(v1.data.stringData,v2.data.stringData);
+            case D_NUMBER:
+                return v1.data.numData == v2.data.numData;
+            case D_BOOLEAN:
+                return v1.data.boolData == v2.data.boolData;
+            case D_NONE:
+                return true;
+            case D_LIST:
+                lhsCur = (v1.data.listData)->top;
+                rhsCur = (v2.data.listData)->top;
+                while(lhsCur && rhsCur){
+                    if(!valueEqual(listNodeToValue(lhsCur),listNodeToValue(rhsCur))) return false;
+                    lhsCur = lhsCur->next;
+                    rhsCur = rhsCur->next;
+                }
+                return true;
+            default:
+                return false;
+        }
+    }else{
+        return false;
+    }
+}
+Value indexString(char* str,Value indexVal,int lineCount){
+    char s[2];
+    if(indexVal.type != D_NUMBER) error("Indexing a string with a non-number data type is illegal",lineCount,RUN_TIME_ERROR);
+    int index = indexVal.data.numData;
+    int n = strlen(str);
+    if(index < 0) index = n + index;
+    if(index < 0 || index >= n){
+        error("Invalid index for string indexing",lineCount,RUN_TIME_ERROR);
+    }
+    s[0] = str[index];
+    s[1] = '\0';
+    return makeString(s);
+}
 double toNumber(Value val){
     switch(val.type){
         case D_NUMBER:
@@ -82,6 +137,7 @@ Value makeNumber(double num){
     Value v;
     v.type = D_NUMBER;
     v.data.numData = num;
+    v.isReturnedValue= false;
     return v;
 }
 
@@ -89,12 +145,14 @@ Value makeBoolean(bool boolean){
     Value v;
     v.type = D_BOOLEAN;
     v.data.boolData = boolean;
+    v.isReturnedValue= false;
     return v;
 }
 
 Value makeString(char* str){
     Value v;
     v.type = D_STRING;
+    v.isReturnedValue= false;
     v.data.stringData = cloneString(str);
     return v;
 }
@@ -113,9 +171,26 @@ bool isTruthy(Value val){
             return false;
     }
 }
+ListNode* valueToListNode(Value v){
+    ListNode* listNode = createListNode();
+    Value* val = createValue();
+    val->data = v.data;
+    val->isReturnedValue  = v.isReturnedValue;
+    val->type = v.type;
+    listNode->value = val;
+    return listNode;
+}
+
+Value listNodeToValue(ListNode* listNode){
+    Value* v = createValue();
+    v->data = listNode->value->data;
+    v->isReturnedValue = listNode->value->isReturnedValue;
+    v->type = listNode->value->type;
+    return *v;
+}
 Value runStatments(astNode* node){
     astNode* cur = node;
-    Value result;
+    Value result = makeNone();
     while(cur){
         result = evaluate(cur);
         if(result.isReturnedValue){
@@ -129,19 +204,7 @@ Value evaluate(astNode* node){
    if(node->type == AST_STRING){
         Value v;
         if(node->isIndexed){
-            char s[2];
-            Value indexVal = evaluate(node->nextIndex);
-            if(indexVal.type != D_NUMBER) error("Indexing a string with a non-number data type is illegal",node->lineCount,RUN_TIME_ERROR);
-            int index = indexVal.data.numData;
-            int n = strlen(node->data.stringData);
-            if(index < 0) index = n + index;
-            if(index < 0 || index >= n){
-                error("Invalid index for string indexing",node->lineCount,RUN_TIME_ERROR);
-            }
-            s[0] = node->data.stringData[index];
-            s[1] = '\0';
-            v = makeString(s);
-            if(node->nextIndex && node->nextIndex->nextIndex) error("Indexing of a string is one dimensional",node->lineCount,RUN_TIME_ERROR);
+            v = indexString(node->data.stringData,evaluate(node->nextIndex),node->lineCount);
         }else{
             v = makeString(node->data.stringData);
         }
@@ -154,7 +217,44 @@ Value evaluate(astNode* node){
    else if(node->type == AST_BOOLEAN){
         Value v = makeBoolean(node->data.boolData);
         return v;
-   }
+   }else if(node->type == AST_LIST){
+        astNode* listElement = node->child; // points to first list element
+        Value listValue;
+        List* list = createList();
+        while(listElement){
+            pushList(list,valueToListNode(evaluate(listElement)));
+            listElement = listElement->nextListElement; 
+        }
+        int n = list->length;
+        listValue.isReturnedValue = false;
+        listValue.type = D_LIST;
+        listValue.data.listData = list;
+        if(node->isIndexed){
+            astNode* curIndexNode = node->nextIndex;
+            Value indexValue;
+            int index = -1;
+            Value current = listValue;
+            while(curIndexNode){
+                indexValue = evaluate(curIndexNode);
+                if(indexValue.type != D_NUMBER) error("Indexing a list with a non-number data type is illegal",node->lineCount,RUN_TIME_ERROR);
+                index = indexValue.data.numData;
+                if(current.type == D_LIST){
+                    if(index < 0) index = n + index;
+                    if(index < 0 || index >= n){
+                        error("Invalid index for string indexing",node->lineCount,RUN_TIME_ERROR);
+                    }
+                    current = listNodeToValue(getListIndex(current.data.listData,index));
+                }else if(current.type == D_STRING){
+                    current = indexString(current.data.stringData,indexValue,node->lineCount);
+                }else{
+                  error("Indexing a non-iterable object is illegal",node->lineCount,RUN_TIME_ERROR);   
+                }
+                curIndexNode = curIndexNode->nextIndex;
+            }
+            return current;
+        }
+        return listValue;
+    }
    else if(node->type == AST_UPLUS){
         Value v = evaluate(node->child);
         return v; 
@@ -167,33 +267,52 @@ Value evaluate(astNode* node){
         Variable* variable = getVariable(node->data.stringData);
         Value * var = variable->data;
         Value result;
-        if(node->isIndexed && (var->type != D_STRING)){
+        if(node->isIndexed && (var->type != D_STRING && var->type != D_LIST)){
             error("Indexing an object which is neither a list nor a string is illegal",node->lineCount,RUN_TIME_ERROR);
         }
         // logic for indexing an identifier (ie variable)
         if(node->isIndexed){
             if(var->type == D_STRING){
-                char s[2];
-                Value indexVal = evaluate(node->nextIndex);
-                if(indexVal.type != D_NUMBER) error("Invalid datatype for an index",node->lineCount,RUN_TIME_ERROR);
-                int index = indexVal.data.numData;
-                int n = strlen(var->data.stringData);
-                if(index < 0) index = n + index;
-                if(index < 0 || index >= n) error("Invalid index for indexing a string",node->lineCount,RUN_TIME_ERROR);
-                s[0] =  var->data.stringData[index];
-                s[1] = '\0';
-                result = makeString(s);
+                result = indexString(var->data.stringData,evaluate(node->nextIndex),node->lineCount);
                 return result;
             }
         }
-
         if(var->type == D_STRING){
             result = makeString(var->data.stringData); 
         }else if(var->type == D_NUMBER){
             result = makeNumber(var->data.numData);
         }else if(var->type == D_BOOLEAN){
             result = makeBoolean(var->data.boolData);
-        }else{
+        }
+        else if(var->type == D_LIST){
+            result.type = D_LIST;
+            result.data.listData = var->data.listData;
+            result.isReturnedValue = false;
+            astNode* curNode = node->nextIndex;
+            Value indexVal;
+            int index = -1;
+            int n = result.data.listData->length;
+            while(curNode){
+                indexVal = evaluate(curNode);
+                index = indexVal.data.numData;
+                if(indexVal.type != D_NUMBER) error("Invalid index for indexing a list",node->lineCount,RUN_TIME_ERROR);
+                index = indexVal.data.numData;
+                if(index < 0) index = n + index;
+                if(result.type == D_LIST){
+                    if(index < 0 || index >= n){
+                        error("Invalid index for list indexing",node->lineCount,RUN_TIME_ERROR);
+                    }
+                    result = listNodeToValue(getListIndex(result.data.listData,index));
+                    if(result.type == D_LIST) n = result.data.listData->length;
+                }else if(result.type == D_STRING){
+                    result = indexString(result.data.stringData,indexVal,node->lineCount);
+                }else{
+                  error("Indexing a non-iterable object is illegal",node->lineCount,RUN_TIME_ERROR);   
+                }
+                curNode = curNode->nextIndex;
+            }
+        }
+        else{
             result.type = D_NONE;
         }
         return result;
@@ -219,6 +338,12 @@ Value evaluate(astNode* node){
                     strcat(result,right.data.stringData);
                     v = makeString(result);
                 } 
+                else if(left.type == D_LIST){
+                    List* listToPush = left.data.listData;
+                    ListNode* listNodeToPush = valueToListNode(right);
+                    pushList(listToPush,listNodeToPush);
+                    v = left;
+                }
                 else{
                     error("Incorrect usage of '+' operator",node->lineCount,SYNTAX_ERROR);
                 }
@@ -427,6 +552,16 @@ Value evaluate(astNode* node){
                 ){
                     v = makeBoolean(toNumber(left) == toNumber(right));
         }
+        else if(left.type == D_LIST && right.type == D_LIST){
+            List* lhsList = left.data.listData;
+            List* rhsList = right.data.listData;
+            if(lhsList->length != rhsList->length){
+                return makeBoolean(false);
+            }else{
+                Value isEqual = makeBoolean(valueEqual(left,right));
+                return isEqual;
+            }
+        }
         else if(left.type == D_NONE && right.type == D_NONE){
             v = makeBoolean(true);
         }
@@ -434,7 +569,7 @@ Value evaluate(astNode* node){
             v = makeBoolean(false);
         }
         else{
-            error("Incorrect Usage of '==' operator",node->lineCount,RUN_TIME_ERROR);
+            return makeBoolean(false);
         }
         return v;
     }
@@ -461,14 +596,49 @@ Value evaluate(astNode* node){
         }
         return v;
     }
+    else if(node->type == AST_POP){
+        Value toPop = evaluate(node->child);
+        if(toPop.type != D_LIST){
+            error("Cannot 'pop' a non-list object",node->lineCount,RUN_TIME_ERROR);
+        }
+        ListNode* popped = popList(toPop.data.listData);
+        return *popped->value;
+    }
     else if(node->type == AST_ASSIGNMENT){
         Value varNameValue = evaluate(node->left);
         char* varName = varNameValue.data.stringData;
+        bool isIndexed = false;
         Value val  = evaluate(node->right);
+        Index* idxs = NULL;
         MemNode* valObj = createMemNode(sizeof(Value));
         *((Value*) valObj->ptr) = val;
+        if(node->isIndexed){
+            astNode* indexNode = node->child;
+            Index* head = NULL;
+            Index* tail = NULL;
+            Index* idx = NULL;
+            Value indexNodeVal;
+            while(indexNode){
+                indexNodeVal = evaluate(indexNode);
+                if(indexNodeVal.type != D_NUMBER) error("An index cannot be non-number",node->lineCount,RUN_TIME_ERROR);
+                idx = createIndex();
+                idx->index = indexNodeVal.data.numData;
+                if(head == NULL){
+                    head = idx;
+                    tail = idx;
+                }else{
+                    tail->next = idx;
+                    tail = idx;
+                }
+                indexNode = indexNode->nextIndex;
+            }
+            idxs = head;
+            isIndexed = true;
+        }
         Variable* v = createVariable(varName,val.type,valObj);
         v->isConstant = node->isConstant;
+        v->indexes = idxs;
+        v->isIndexed = isIndexed;
         setVariable(v);
         return makeNone();
     }else if(node->type == AST_INT){
@@ -527,7 +697,11 @@ Value evaluate(astNode* node){
         Value toReturn;
         if(inValue.type == D_STRING){
             toReturn = makeNumber(strlen(inValue.data.stringData));
-        }else{
+        }
+        else if(inValue.type == D_LIST){
+            toReturn = makeNumber(inValue.data.listData->length);
+        }
+        else{
             error("len() does not support number/boolean/None as a valid parameter",node->lineCount,RUN_TIME_ERROR);
         }
         return toReturn;
@@ -542,7 +716,10 @@ Value evaluate(astNode* node){
             toReturn = makeString("NUMBER");
         }else if(inValue.type == D_BOOLEAN){
             toReturn = makeString("BOOLEAN");
-        }else{
+        }else if(inValue.type == D_LIST){
+            toReturn = makeString("LIST");
+        }
+        else{
             toReturn = makeString("NONE");
         }
         return toReturn;
@@ -555,7 +732,8 @@ Value evaluate(astNode* node){
             printValue(v);
             current = current->thenNext;
         }
-        printf("\n");
+        printf(" \n");
+        fflush(stdout);
         return makeNone();
     }else if(node->type == AST_INPUT){
         Value inputAsker = evaluate(node->child);
@@ -614,7 +792,7 @@ Value evaluate(astNode* node){
             if(stringToTraverse.type != D_STRING){
                 error("For Loop requires a string object to traverse",node->lineCount,RUN_TIME_ERROR);
             }
-            MemNode* iteratorMemObj = createMemNode(sizeof(Variable));
+            MemNode* iteratorMemObj = createMemNode(sizeof(Value));
             Value v;
             v.type = D_STRING;
             v.data.stringData = createMemNode(2)->ptr;
@@ -623,6 +801,7 @@ Value evaluate(astNode* node){
             Variable* iterator = createVariable(node->data.stringData,D_STRING,iteratorMemObj);
             *(iterator->data) = v;
             setVariable(iterator);
+            iterator = getVariable(node->data.stringData);
             // run the for loop
             Value result;
             for(int i = 0;i < stringLength;i++){
@@ -636,13 +815,14 @@ Value evaluate(astNode* node){
             Value range_end = evaluate(node->range_end);
             Value range_skip = evaluate(node->range_skip);;
             // create the iterator variable
-            MemNode* iteratorMemObj = createMemNode(sizeof(Variable));
+            MemNode* iteratorMemObj = createMemNode(sizeof(Value));
             Value v;
             v.type = D_NUMBER;
             v.data = range_start.data;
             Variable* iterator = createVariable(node->data.stringData,D_NUMBER,iteratorMemObj);
             *(iterator->data) = v;
             setVariable(iterator);
+            iterator = getVariable(node->data.stringData);
             // run the for loop
             Value result;
             int start= iterator->data->data.numData;

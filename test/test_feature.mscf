@@ -1,5 +1,0 @@
-mount tester
-
-print("before")
-testEqual(10 + 1,11,"Basic Integer Addition Test")
-print("after")

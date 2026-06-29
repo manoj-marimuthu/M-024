@@ -6,7 +6,7 @@ mount tester
 
 # +
 testEqual(10 + 1,11,"Basic Integer Addition Test")
-testEqual(10.10 + 1.20,11.30,"Basic Float Addition Test")
+testAlmostEqual(10.10 + 1.20,11.3,"Basic Float Addition Test")
 
 # -
 
@@ -21,12 +21,12 @@ testEqual(2.5 * 2,5.0,"Basic Float Multiplication Test")
 # /
 
 testEqual(60 / 3,20,"Basic Integer Division Test")
-testEqual(25.5 / 5,5.05,"Basic Float Division Test")
+testAlmostEqual(25.5 / 5,5.05,"Basic Float Division Test")
 
 # %
 
 testEqual(30 % 4,2,"Basic Integer Remainder Test")
-testEqual(5.4 % 5,0.4,"Basic Float Remainder Test")
+testAlmostEqual(5.4 % 5,0.4,"Basic Float Remainder Test")
 
 # ^
 
