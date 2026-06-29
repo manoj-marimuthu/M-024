@@ -4,13 +4,20 @@
 #include <value.h>
 
 typedef struct ListNode{
-    struct ListNode* prev;
     struct ListNode* next;
-    Value value;
+    Value* value;
 } ListNode;
 
 typedef struct List{
     ListNode* top;
+    ListNode* tail;
     int length;
 } List;
+
+ListNode* createListNode();
+List* createList();
+void pushList(List* list,ListNode* node);
+ListNode* popList(List* list);
+ListNode* getListIndex(List* list,int index);
+
 #endif

@@ -175,6 +175,9 @@ void line_lexer(char* line,int lineCount,Stack* stk){
                 else if(strcmp(temp->data.strData,"mount") == 0){
                     temp->type = MOUNT;
                 }
+                else if(strcmp(temp->data.strData,"pop") == 0){
+                    temp->type = POP;
+                }
                 else{
                     temp->type = IDENTIFIER;
                 }

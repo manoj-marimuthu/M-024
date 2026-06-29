@@ -16,9 +16,6 @@ extern MemNode* memory;
 
 MemNode* createMemNode(size_t n);
 void reallocMemNode(MemNode* node,size_t capacity);
-void refInc(MemNode* node);
-void refDec(MemNode* node);
-void destroyValue(Value v);
 void clean_all();
 
 #endif

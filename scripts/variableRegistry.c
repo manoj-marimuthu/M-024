@@ -4,6 +4,7 @@
 #include <string.h>
 #include <value.h>
 #include <callStack.h>
+#include <listobj.h>
 
 Variable* createVariable(char* varName,DataType type,MemNode* obj){
     MemNode* node = createMemNode(sizeof(Variable));
@@ -15,8 +16,8 @@ Variable* createVariable(char* varName,DataType type,MemNode* obj){
     v->isConstant = false;
     v->type = type;
     v->next = NULL;
-    v->in_file_perm = 7;
-    v->out_file_perm = 7;
+    v->indexes = NULL;
+    v->isIndexed = false;
     return v;
 }
 
@@ -34,6 +35,31 @@ void setVariable(Variable* v){
     size_t index = hash(v->varName);
     Variable* current = call_stack->locals[index];
     Variable* prev = NULL;
+    if(v->isIndexed){
+        Variable* existing = getVariable(v->varName);
+        if(existing->isConstant){
+                char err[256];
+                snprintf(err,sizeof(err),"'%s' cannot be Modified (const)",existing->varName);
+                error(err,0,RUN_TIME_ERROR);
+                return;
+            }
+        if(existing->type != D_LIST) error("Cannot assign values at indexes of non-list object",-1,RUN_TIME_ERROR);
+        List* listToSet = existing->data->data.listData;
+        Index* idx = v->indexes;
+        ListNode* toSet = getListIndex(listToSet,idx->index);
+        while(idx != NULL){
+            toSet = getListIndex(listToSet,idx->index);
+            if(idx->next){
+                if(toSet->value->type != D_LIST){
+                    error("Cannot assign values at indexes of non-list object",-1,RUN_TIME_ERROR);
+                }
+                listToSet = toSet->value->data.listData;
+            }
+            idx = idx->next;
+        }
+        toSet->value = v->data;
+        return;
+    }
     while(current != NULL){
         if(strcmp(current->varName,v->varName) == 0){
             if(current->isConstant){
@@ -42,10 +68,8 @@ void setVariable(Variable* v){
                 error(err,0,RUN_TIME_ERROR);
                 return;
             }
-            current->data = v->data;
+            *(current->data) = *(v->data);
             current->type = v->type;
-            current->in_file_perm = v->in_file_perm;
-            current->out_file_perm = v->out_file_perm;
             return;
         }
         prev = current;
@@ -89,10 +113,14 @@ int removeVariable(char* varName){
             found = 1;
         }
         if(found) break;
-        Variable* prev;
+        Variable* prev = NULL;
         while(current != NULL){
             if(strcmp(current->varName,varName) == 0){
-                prev->next = current->next;
+                if(prev){
+                    prev->next = current->next;
+                }else{
+                    curStack->locals[index] = current->next;
+                }
                 found = 1;
                 break;
             }

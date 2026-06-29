@@ -21,7 +21,6 @@ s = 0
 for i in <10,1,(0-2)>: # loop pattern = 10 -> 8 -> 6 -> 4 -> 2
     s = s + i
 testEqual(s,30,"Basic for loop test with negative skip")
-
 s = 0
 range_start = 1
 range_end = 10

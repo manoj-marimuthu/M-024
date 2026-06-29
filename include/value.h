@@ -2,13 +2,14 @@
 #define VALUE_H
 
 #include <stdbool.h>
+
 typedef struct List List;
 typedef enum {
     D_STRING,
     D_NUMBER,
     D_BOOLEAN,
     D_NONE,
-    D_SKIP
+    D_LIST
 } DataType;
 
 typedef struct Value{
@@ -22,4 +23,5 @@ typedef struct Value{
     bool isReturnedValue;
 } Value;
 
+Value* createValue();
 #endif

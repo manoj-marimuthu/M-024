@@ -1,0 +1,21 @@
+mount tester
+
+# the following test file focusses on testing the list datatype
+# and its operations such as indexing, pushing and popping.
+
+s = [1,2,3,["Hi",10]]
+
+# list indexing test
+testEqual(s[0],1,"Basic list indexing test 1")
+testEqual(s[3][0],"Hi","Basic list indexing test 2")
+
+# list push
+
+s = s + 1
+testEqual(s,[1,2,3,["Hi",10],1],"List push test")
+
+# list pop
+
+popped_element = pop s
+testEqual(s,[1,2,3,["Hi",10]],"List after pop test")
+testEqual(popped_element,1,"List pop return test")
