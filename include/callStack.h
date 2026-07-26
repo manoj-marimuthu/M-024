@@ -10,8 +10,8 @@ typedef struct CallStackNode{
     struct CallStackNode* prev;
 } CallStackNode;
 
-CallStackNode* call_stack;
-CallStackNode* createCallStackNode();
+extern CallStackNode* call_stack;
+extern CallStackNode* createCallStackNode();
 void pushCallStackNode(CallStackNode* node);
 void popCallStackNode();
 #endif

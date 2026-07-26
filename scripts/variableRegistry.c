@@ -18,6 +18,9 @@ Variable* createVariable(char* varName,DataType type,MemNode* obj){
     v->next = NULL;
     v->indexes = NULL;
     v->isIndexed = false;
+    v->read_bit = 7;
+    v->write_bit = 7;
+    v->kill_bit = 7;
     return v;
 }
 
@@ -37,7 +40,7 @@ void setVariable(Variable* v){
     Variable* prev = NULL;
     if(v->isIndexed){
         Variable* existing = getVariable(v->varName);
-        if(existing->isConstant){
+        if(existing->isConstant || !existing->write_bit){
                 char err[256];
                 snprintf(err,sizeof(err),"'%s' cannot be Modified (const)",existing->varName);
                 error(err,0,RUN_TIME_ERROR);
@@ -62,7 +65,7 @@ void setVariable(Variable* v){
     }
     while(current != NULL){
         if(strcmp(current->varName,v->varName) == 0){
-            if(current->isConstant){
+            if(current->isConstant || !current->write_bit){
                 char err[256];
                 snprintf(err,sizeof(err),"'%s' cannot be Modified (const)",current->varName);
                 error(err,0,RUN_TIME_ERROR);
@@ -109,6 +112,11 @@ int removeVariable(char* varName){
         Variable* current = curStack->locals[index];
         found = 0;
         if(current && strcmp(current->varName,varName) == 0){
+	    if(!current->kill_bit){
+		char errMsg[256];
+		snprintf(errMsg,sizeof(errMsg),"Kill permission denied for variable '%s'",varName);
+		error(errMsg,-1,RUN_TIME_ERROR);
+	    }
             curStack->locals[index] = current->next;
             found = 1;
         }

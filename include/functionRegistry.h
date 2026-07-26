@@ -16,7 +16,7 @@ typedef struct Function{
     struct Function* next;
 } Function;
 
-Function* functionArr[100];
+extern Function* functionArr[100];
 void initFunctionRegister();
 Param* createParam(char* paramName);
 Function* createFunction();

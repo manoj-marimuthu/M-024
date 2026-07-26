@@ -44,6 +44,9 @@ fn abs(n):
         n = (0-1) * n
     return n
 
+fn exp(n):
+    return e^(n)
+
 fn gcd(a,b):
     while b != 0:
         temp = b

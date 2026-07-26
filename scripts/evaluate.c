@@ -32,9 +32,9 @@ void printValue(Value v){
             break;
         case D_BOOLEAN:
             if(v.data.boolData == true){
-                printf("True");
+                printf("%s","True");
             }else{
-                printf("False");
+                printf("%s","False");
             }
             break;
         case D_NONE:
@@ -265,6 +265,11 @@ Value evaluate(astNode* node){
    }
    else if(node->type == AST_IDENTIFIER){
         Variable* variable = getVariable(node->data.stringData);
+	if(!variable->read_bit){
+		char errMsg[256];
+		snprintf(errMsg,sizeof(errMsg),"Reading permission is denied for variable : %s",node->data.stringData);
+		error(errMsg,node->lineCount,RUN_TIME_ERROR);
+	}
         Value * var = variable->data;
         Value result;
         if(node->isIndexed && (var->type != D_STRING && var->type != D_LIST)){
@@ -743,7 +748,7 @@ Value evaluate(astNode* node){
         toReturn.data.stringData = buf->ptr;
         switch(inputAsker.type){
             case D_STRING:
-                printf(inputAsker.data.stringData);
+                printf("%s",inputAsker.data.stringData);
                 fgets(toReturn.data.stringData,1024,stdin);
                 size_t len = strlen(toReturn.data.stringData);
                 char** toReturnStr = &toReturn.data.stringData;
@@ -955,6 +960,16 @@ Value evaluate(astNode* node){
             error("Unknown variable/function provided",node->lineCount,RUN_TIME_ERROR);
         }
         return makeNone();
+    }
+    else if(node->type == AST_CHMOD){
+	Variable* var = getVariable(node->data.stringData);
+	int permission_bits = node->permission_bits;
+	var->kill_bit = permission_bits % 10;
+	permission_bits /= 10;
+	var->write_bit = permission_bits % 10;
+	permission_bits /= 10;
+	var->read_bit = permission_bits % 10;
+	return makeNone();
     }
     else if(node->type == AST_MOUNT){
         char* fileName = node->data.stringData;

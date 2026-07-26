@@ -1,5 +1,12 @@
 #include <globals.h>
 
+LexerNode* lexer_output = NULL;
+LexerNode* lexer_tail = NULL;
+LexerNode* current = NULL;
+astNode* ast_root = NULL;
+astNode* ast_tail = NULL;
+Stack* stk = NULL;
+
 void clear_states(){
     lexer_output = NULL;
     lexer_tail = NULL;

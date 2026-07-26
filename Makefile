@@ -25,7 +25,7 @@ else
 	CLEAN = rm -f build/*.o M024
 endif
 $(TARGET) : $(OBJ)
-	$(COMMAND) $(OBJ) -o $(TARGET)
+	$(COMMAND) $(OBJ) -o $(TARGET) -lm
 build/interpret.o : interpret.c
 	$(COMMAND) -c interpret.c -o build/interpret.o
 build/interpret_api.o : scripts/interpret_api.c

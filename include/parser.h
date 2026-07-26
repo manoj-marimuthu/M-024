@@ -43,7 +43,8 @@ typedef enum{
     AST_UMINUS,
     AST_KILL,
     AST_LIST,
-    AST_POP
+    AST_POP,
+    AST_CHMOD
 } astNodeType;
 
 typedef struct astNode{
@@ -72,6 +73,7 @@ typedef struct astNode{
     struct astNode* nextIndex;
     struct astNode* nextListElement;
     int lineCount;
+    int permission_bits;
     bool isConstant;
     bool isStringLoop;
     bool isIndexed;
@@ -104,6 +106,7 @@ astNode* parseAtom();
 astNode* parseIndex();
 astNode* parseKill();
 astNode* parsePop();
+astNode* parseChmod();
 void Parser();
 
 #endif
