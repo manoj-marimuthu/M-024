@@ -14,6 +14,9 @@ typedef struct Variable{
     struct Variable* next;
     bool isIndexed;
     Index* indexes;
+    int read_bit;
+    int write_bit;
+    int kill_bit;
 } Variable;
 
 Variable* createVariable(char* varName,DataType type,MemNode* obj);

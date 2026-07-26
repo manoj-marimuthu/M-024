@@ -35,6 +35,7 @@ astNode* createAstNode(){
     temp->range_start = NULL;
     temp->range_end = NULL;
     temp->range_skip = NULL;
+    temp->permission_bits = 777;
     return temp;
 }
 void consume(){
@@ -53,6 +54,9 @@ astNode* parseAtom(){
     }
     else if(current && current->type == OPERATOR && (current->data.charData =='+' || current->data.charData == '-')){
         return parseUnary();
+    }
+    else if(current && current->type == CHMOD){
+	return parseChmod();
     }
     else if(current && current->type == STRING){
         astNode* node = createAstNode();
@@ -1026,6 +1030,33 @@ astNode* parseMount(){
         return NULL;
     }
 }
+
+astNode* parseChmod(){
+	skipNewline();
+	if(current && current->type == CHMOD){
+		consume();
+		astNode* node = createAstNode();
+		node->type = AST_CHMOD;
+		if(current && current->type == IDENTIFIER){
+			node->data.stringData = current->data.strData;
+			consume();
+			if(current && current->type == NUMBER){
+				node->permission_bits = (int) current->data.numData;
+				consume();
+				return node;
+			}else{
+			   error("Permission bits for the chmod command must be a number",current->lineCount,RUN_TIME_ERROR);
+			   return NULL;
+			}	  
+		}else{
+			error("chmod command requires an identifier to modify permissions",current->lineCount,RUN_TIME_ERROR);
+		        return NULL;
+		}
+	}else{
+		return NULL;
+	}
+}
+
 astNode* parseBlock(){
     skipNewline();
     LexerNode* node = current;
@@ -1038,12 +1069,14 @@ astNode* parseBlock(){
     else if(node->type == FOR) return parseForLoop();
     else if(node->type == IDENTIFIER && node->next->type == L_BRACK) return parseCallFunction();
     else if(node->type == IDENTIFIER || node->type == CONST) return parseVarDec();
+    else if(node->type == CHMOD) return parseChmod();
     else if(node->type == FUNCTION) return parseFunction();
     else if(node->type == RETURN) return parseReturn();
     else if(node->type == MOUNT) return parseMount();
     else if(node->type == KILL) return parseKill();
     else if(node->type == POP) return parsePop();
-    else{ 
+    else{
+	printf("Token type = %d",node ? node->type : -1); 
         error("Undefined Statement Found While Parsing",current->lineCount,RUN_TIME_ERROR);
         return NULL;
     }

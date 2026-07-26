@@ -34,6 +34,7 @@ int main(){
         fputs(inp,fp);
         fclose(fp);
         interpret(REPL_FILE_NAME);
+        printf("\n");
         lexer_output = NULL;
         lexer_tail = NULL;
         ast_root = NULL;

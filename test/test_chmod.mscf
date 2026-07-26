@@ -1,0 +1,4 @@
+x = 10
+print("Killing x....")
+chmod x 110
+kill x
