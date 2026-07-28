@@ -14,6 +14,9 @@ typedef struct Function{
     astNode* thenBlock;
     int param_length;
     struct Function* next;
+    int i_read_bit;
+    int i_write_bit;
+    int i_kill_bit;
 } Function;
 
 extern Function* functionArr[100];

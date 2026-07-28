@@ -33,7 +33,7 @@ standard for file handling in M-024 and not built-in functions).
     <tr>
         <td>chmod</td>
         <td>Inspired from UNIX file permissions, M-024 uses chmod
-        to handle permissions of a variable (soon functions too).
+        to handle permissions of a variable and a function.
         Used as - chmod <variable_name> abc where a,b,c are integers
         and will take any values but 0 for permission denial and anything
         else for permission acceptance.    

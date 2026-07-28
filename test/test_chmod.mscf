@@ -1,4 +1,8 @@
-x = 10
-print("Killing x....")
-chmod x 110
-kill x
+fn myFunction():
+   print("I work")
+
+myFunction()
+chmod myFunction 100
+kill myFunction
+
+

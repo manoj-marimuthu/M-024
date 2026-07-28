@@ -25,6 +25,9 @@ Function* createFunction(){
     f->thenBlock = NULL;
     f->functionName = NULL;
     f->param_length = 0;
+    f->i_read_bit = 1;
+    f->i_write_bit = 1;
+    f->i_write_bit = 1;
     return f;
 }
 
@@ -35,12 +38,23 @@ void setFunction(Function* f){
         return;
     }else{
         Function** cur = &functionArr[index];
+	Function* prev = NULL;
         while(*cur){
             if(strcmp((*cur)->functionName,f->functionName) == 0){
-                char err[256];
-                snprintf(err,sizeof(err),"Function '%s' Already Exists",f->functionName);
-                error(err,0,FUNCTION_ERROR);
+                if(!(*cur)->i_write_bit){
+		   char errMsg[256];
+		   snprintf(errMsg,sizeof(errMsg),"Permission to write is denied for '%s'",f->functionName);
+		   error(errMsg,-1,RUN_TIME_ERROR);
+		}else{
+		   if(prev != NULL){
+			prev->next = f;
+		   }
+		   Function* next = (*cur)->next;
+		   f->next = next;
+		   *cur = f;
+		}
             }
+	    prev = *cur;
             cur = &(*cur)->next;
         }
         *cur = f;
@@ -53,6 +67,11 @@ Function* getFunction(char* functionName){
     Function* cur = functionArr[index];
     while(cur != NULL){
         if(strcmp(functionName,cur->functionName) == 0){
+	    if(!cur->i_read_bit){
+		char errMsg[256];
+		snprintf(errMsg,sizeof(errMsg),"Permission to read '%s' is denied",functionName);
+		error(errMsg,-1,RUN_TIME_ERROR);
+	    }
             return cur;
         }
         cur = cur->next;
@@ -71,9 +90,14 @@ int removeFunction(char* functionName){
     bool found = 0;
     while(cur != NULL){
         if(strcmp(functionName,cur->functionName) == 0){
+	    if(!cur->i_kill_bit){
+		char errMsg[256];
+		snprintf(errMsg,sizeof(errMsg),"Permission to kill '%s' is denied",functionName);
+		error(errMsg,-1,RUN_TIME_ERROR);
+	    }
             if(prev == NULL){
                 functionArr[index] = cur->next;
-            }else{
+	    }else{
                 prev->next = cur->next;
             }
             found = true;

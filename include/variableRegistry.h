@@ -24,5 +24,5 @@ unsigned int hash(char* varName);
 void setVariable(Variable* v);
 Variable* getVariable(char* varName);
 int removeVariable(char* varName);
-
+Variable* getVariableUnsafe(char* varName);
 #endif
