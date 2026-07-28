@@ -962,13 +962,22 @@ Value evaluate(astNode* node){
         return makeNone();
     }
     else if(node->type == AST_CHMOD){
-	Variable* var = getVariable(node->data.stringData);
-	int permission_bits = node->permission_bits;
-	var->kill_bit = permission_bits % 10;
-	permission_bits /= 10;
-	var->write_bit = permission_bits % 10;
-	permission_bits /= 10;
-	var->read_bit = permission_bits % 10;
+	Variable* var = getVariableUnsafe(node->data.stringData);	
+        int permission_bits = node->permission_bits;
+	if(var){
+	  var->kill_bit = permission_bits % 10;
+	  permission_bits /= 10;
+	  var->write_bit = permission_bits % 10;
+	  permission_bits /= 10;
+	  var->read_bit = permission_bits % 10;
+	}else{
+	   Function* f = getFunction(node->data.stringData);
+	   f->i_kill_bit = permission_bits % 10;
+	   permission_bits /= 10;
+	   f->i_write_bit = permission_bits % 10;
+	   permission_bits /= 10;
+	   f->i_read_bit = permission_bits % 10;
+	}
 	return makeNone();
     }
     else if(node->type == AST_MOUNT){

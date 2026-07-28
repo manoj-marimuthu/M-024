@@ -104,6 +104,21 @@ Variable* getVariable(char* varName){
     return NULL;
 }
 
+Variable* getVariableUnsafe(char* varName){
+    size_t index = hash(varName);
+    CallStackNode* curStack = call_stack;
+    while(curStack){
+        Variable* current = curStack->locals[index];
+        while(current != NULL){
+            if(strcmp(current->varName,varName) == 0){
+                return current;
+            }
+            current = current->next;
+        }
+        curStack = curStack->prev;
+    }
+    return NULL;
+}
 int removeVariable(char* varName){
     size_t index = hash(varName);
     CallStackNode* curStack = call_stack;
