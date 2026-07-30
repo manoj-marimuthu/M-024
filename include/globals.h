@@ -13,6 +13,7 @@ typedef struct GlobalsCopy{
     LexerNode* current;
     astNode* ast_root;
     astNode* ast_tail;
+    char* curFileName;
 } GlobalsCopy;
 
 // actual globals used in files
@@ -22,6 +23,7 @@ extern Stack* stk;
 extern LexerNode* current;
 extern astNode* ast_root;
 extern astNode* ast_tail;
+extern char* curFileName;
 
 void clear_states();
 GlobalsCopy copy_state();

@@ -74,6 +74,7 @@ typedef struct astNode{
     struct astNode* nextListElement;
     int lineCount;
     int permission_bits;
+    bool isExtern;
     bool isConstant;
     bool isStringLoop;
     bool isIndexed;

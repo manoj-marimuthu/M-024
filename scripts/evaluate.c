@@ -265,7 +265,8 @@ Value evaluate(astNode* node){
    }
    else if(node->type == AST_IDENTIFIER){
         Variable* variable = getVariable(node->data.stringData);
-	if(!variable->read_bit){
+	int perm = variable->from == curFileName ? variable->i_read_bit : variable->e_read_bit;
+	if(!perm){
 		char errMsg[256];
 		snprintf(errMsg,sizeof(errMsg),"Reading permission is denied for variable : %s",node->data.stringData);
 		error(errMsg,node->lineCount,RUN_TIME_ERROR);
@@ -903,6 +904,12 @@ Value evaluate(astNode* node){
         Value param_values_arr[node->param_length];
         astNode* param_values = node->param;
         Function* function = getFunction(node->data.stringData);
+	int perm = function->from == curFileName ? function->i_read_bit : function->e_read_bit;
+	if(!perm){
+	  char errMsg[256];
+	  snprintf(errMsg,sizeof(errMsg),"Read permission denied for '%s'",node->data.stringData);
+	  error(errMsg,node->lineCount,RUN_TIME_ERROR);
+	}
         Param* params = function->params;
         CallStackNode* callStackNode = createCallStackNode();
         callStackNode->function = function;
@@ -964,19 +971,36 @@ Value evaluate(astNode* node){
     else if(node->type == AST_CHMOD){
 	Variable* var = getVariableUnsafe(node->data.stringData);	
         int permission_bits = node->permission_bits;
-	if(var){
-	  var->kill_bit = permission_bits % 10;
-	  permission_bits /= 10;
-	  var->write_bit = permission_bits % 10;
-	  permission_bits /= 10;
-	  var->read_bit = permission_bits % 10;
-	}else{
-	   Function* f = getFunction(node->data.stringData);
-	   f->i_kill_bit = permission_bits % 10;
-	   permission_bits /= 10;
-	   f->i_write_bit = permission_bits % 10;
-	   permission_bits /= 10;
-	   f->i_read_bit = permission_bits % 10;
+	if(node->isExtern){
+		if(var){
+	  		var->e_kill_bit = permission_bits % 10;
+	  		permission_bits /= 10;
+	  		var->e_write_bit = permission_bits % 10;
+	  		permission_bits /= 10;
+	 		var->e_read_bit = permission_bits % 10;
+		}else{
+	   		Function* f = getFunction(node->data.stringData);
+	   		f->e_kill_bit = permission_bits % 10;
+	   		permission_bits /= 10;
+	  		f->e_write_bit = permission_bits % 10;
+	  		permission_bits /= 10;
+	   		f->e_read_bit = permission_bits % 10;
+		}
+	}else{ 
+	  	if(var){
+	   		var->i_kill_bit = permission_bits % 10;
+	   		permission_bits /= 10;
+	   		var->i_write_bit = permission_bits % 10;
+	   		permission_bits /= 10;
+	   		var->i_read_bit = permission_bits % 10;
+	 	}else{
+	   		Function* f = getFunction(node->data.stringData);
+	   		f->i_kill_bit = permission_bits % 10;
+	   		permission_bits /= 10;
+	   		f->i_write_bit = permission_bits % 10;
+	   		permission_bits /= 10;
+	   		f->i_read_bit = permission_bits % 10;
+	  	}
 	}
 	return makeNone();
     }

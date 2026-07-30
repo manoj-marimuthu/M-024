@@ -35,7 +35,8 @@ astNode* createAstNode(){
     temp->range_start = NULL;
     temp->range_end = NULL;
     temp->range_skip = NULL;
-    temp->permission_bits = 777;
+    temp->permission_bits = 111;
+    temp->isExtern = false;
     return temp;
 }
 void consume(){
@@ -1037,6 +1038,10 @@ astNode* parseChmod(){
 		consume();
 		astNode* node = createAstNode();
 		node->type = AST_CHMOD;
+		if(current && current->type == EXTERN){
+			consume();
+			node->isExtern = true;
+		}
 		if(current && current->type == IDENTIFIER){
 			node->data.stringData = current->data.strData;
 			consume();

@@ -38,13 +38,16 @@ standard for file handling in M-024 and not built-in functions).
         and will take any values but 0 for permission denial and anything
         else for permission acceptance.    
         a - read permission, b - write permission, c - kill permission.
-        Only supports current file permissions, soon will also allow permissions
-        for files that import variables / functions.        
+        To handle permissions of a variable/function outside its current file,
+        use the ```extern```` keyword followed by the usual convention as said
+        before.        
         </td>
         <td>
             x = 10
             chmod x 110
-            # read - allowed, write - allowed, kill - denied
+            # read - allowed, write - allowed, kill - denied (internal file permissions)
+            chmod extern x 000
+            # read - denied, write - denied, kill -denied (external file permissions)
         </td>
     </tr>
 </table>

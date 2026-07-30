@@ -49,7 +49,8 @@ typedef enum {
     IN,
     POP,
     KILL,
-    CHMOD
+    CHMOD,
+    EXTERN
 } LexerNodeType;
 
 typedef struct LexerNode
