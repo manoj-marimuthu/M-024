@@ -956,7 +956,7 @@ Value evaluate(astNode* node){
         v.isReturnedValue = true;
         return v;
     }
-    else if(node->type == AST_KILL){
+    else if(node->type == AST_RM){
         int status = removeVariable(node->data.stringData);
         // variable to remove  not found
         if(status == 0){
@@ -964,7 +964,7 @@ Value evaluate(astNode* node){
         }
         // if no variable/function of such name was removed
         if(status == 0){
-            error("Unknown variable/function provided",node->lineCount,RUN_TIME_ERROR);
+            error("Unknown variable/function provided to rm command",node->lineCount,RUN_TIME_ERROR);
         }
         return makeNone();
     }

@@ -21,13 +21,13 @@ standard for file handling in M-024 and not built-in functions).
         <td>popped = pop myList</td>
     </tr>
     <tr>
-        <td>kill</td>
+        <td>rm</td>
         <td>
-            Inspired from pkill, kill deletes variables
-            and functions from memory.        
+            Inspired from rm in UNIX shell commands, rm deletes variables
+            and functions from memory.  
         </td>
         <td>
-            kill myVariable
+            rm myVariable
         </td>
     </tr>
     <tr>

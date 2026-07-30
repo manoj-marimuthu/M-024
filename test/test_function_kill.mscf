@@ -1,5 +1,0 @@
-fn sample_function():
-    return True
-
-kill sample_function
-sample_function() # Should raise error since it was killed my M024

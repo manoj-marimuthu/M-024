@@ -133,8 +133,8 @@ void line_lexer(char* line,int lineCount,Stack* stk){
                 else if(strcmp(temp->data.strData,"for") == 0){
                     temp->type = FOR;
                 }
-                else if(strcmp(temp->data.strData,"kill") == 0){
-                    temp->type = KILL;
+                else if(strcmp(temp->data.strData,"rm") == 0){
+                    temp->type = RM;
                 }
                 else if(strcmp(temp->data.strData,"in") == 0){
                     temp->type = IN;

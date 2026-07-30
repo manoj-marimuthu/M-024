@@ -1,4 +1,0 @@
-fn x():
-	print("Hello World")
-chmod extern  x 110
-

@@ -1,0 +1,4 @@
+fn sample_function():
+    return True
+rm sample_function
+sample_function() # Should raise error since it was removed by M024
