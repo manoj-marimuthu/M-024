@@ -17,6 +17,10 @@ typedef struct Function{
     int i_read_bit;
     int i_write_bit;
     int i_kill_bit;
+    int e_read_bit;
+    int e_write_bit;
+    int e_kill_bit;
+    char* from;
 } Function;
 
 extern Function* functionArr[100];

@@ -3,6 +3,7 @@
 #include <error.h>
 #include <variableRegistry.h>
 #include <string.h>
+#include <globals.h>
 // function registry
 Function* functionArr[100];
 void initFunctionRegister(){
@@ -27,7 +28,11 @@ Function* createFunction(){
     f->param_length = 0;
     f->i_read_bit = 1;
     f->i_write_bit = 1;
-    f->i_write_bit = 1;
+    f->i_write_bit = 1;    
+    f->e_read_bit = 1;
+    f->e_write_bit = 1;
+    f->e_kill_bit = 1;
+    f->from = curFileName;
     return f;
 }
 
@@ -41,7 +46,8 @@ void setFunction(Function* f){
 	Function* prev = NULL;
         while(*cur){
             if(strcmp((*cur)->functionName,f->functionName) == 0){
-                if(!(*cur)->i_write_bit){
+                int perm = (*cur)->from == curFileName ? (*cur)->i_write_bit : (*cur)->e_write_bit;
+		if(!perm){
 		   char errMsg[256];
 		   snprintf(errMsg,sizeof(errMsg),"Permission to write is denied for '%s'",f->functionName);
 		   error(errMsg,-1,RUN_TIME_ERROR);
@@ -67,7 +73,8 @@ Function* getFunction(char* functionName){
     Function* cur = functionArr[index];
     while(cur != NULL){
         if(strcmp(functionName,cur->functionName) == 0){
-	    if(!cur->i_read_bit){
+            int perm =  cur->from == curFileName ? cur->i_read_bit : cur->e_read_bit;
+	    if(!perm){
 		char errMsg[256];
 		snprintf(errMsg,sizeof(errMsg),"Permission to read '%s' is denied",functionName);
 		error(errMsg,-1,RUN_TIME_ERROR);
@@ -76,7 +83,7 @@ Function* getFunction(char* functionName){
         }
         cur = cur->next;
     }
-   char err[256];
+    char err[256];
     snprintf(err,sizeof(err),"Undefined Function '%s'",functionName);
     error(err,0,FUNCTION_ERROR);
     return NULL;
@@ -90,7 +97,8 @@ int removeFunction(char* functionName){
     bool found = 0;
     while(cur != NULL){
         if(strcmp(functionName,cur->functionName) == 0){
-	    if(!cur->i_kill_bit){
+	    int perm = cur->from == curFileName ? cur->i_kill_bit : cur->e_kill_bit;
+	    if(!perm){
 		char errMsg[256];
 		snprintf(errMsg,sizeof(errMsg),"Permission to kill '%s' is denied",functionName);
 		error(errMsg,-1,RUN_TIME_ERROR);

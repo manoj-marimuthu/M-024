@@ -1,0 +1,3 @@
+mount "test/chmod_test/a.mscf"
+
+kill x

@@ -22,6 +22,9 @@ void interpret(char* fileName){
         Import* parent_import = create_import(fileName);
         push_import_loading(parent_import);
         Lexer(fileName);
+	MemNode* curFileNameObj = createMemNode(strlen(fileName)+1);
+	strcpy(curFileNameObj->ptr,fileName);
+	curFileName = curFileNameObj->ptr;
         current = lexer_output;
         Parser();
         Execute();

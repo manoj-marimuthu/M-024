@@ -6,6 +6,7 @@ LexerNode* current = NULL;
 astNode* ast_root = NULL;
 astNode* ast_tail = NULL;
 Stack* stk = NULL;
+char* curFileName = NULL;
 
 void clear_states(){
     lexer_output = NULL;
@@ -14,6 +15,7 @@ void clear_states(){
     current = NULL;
     ast_root = NULL;
     ast_tail = NULL;
+    curFileName = NULL;
 }
 GlobalsCopy copy_state(){
     GlobalsCopy copy;
@@ -23,6 +25,7 @@ GlobalsCopy copy_state(){
     copy.current = current;
     copy.ast_root = ast_root;
     copy.ast_tail = ast_tail;
+    copy.curFileName = curFileName;
     return copy;
 }
 void restore_state(GlobalsCopy copy){
@@ -32,4 +35,5 @@ void restore_state(GlobalsCopy copy){
     current = copy.current;
     ast_root = copy.ast_root;
     ast_tail = copy.ast_tail;
+    curFileName = copy.curFileName;
 }

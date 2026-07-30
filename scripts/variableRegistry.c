@@ -1,6 +1,7 @@
 #include <variableRegistry.h>
 #include <memoryHandler.h>
 #include <error.h>
+#include <globals.h>
 #include <string.h>
 #include <value.h>
 #include <callStack.h>
@@ -18,9 +19,13 @@ Variable* createVariable(char* varName,DataType type,MemNode* obj){
     v->next = NULL;
     v->indexes = NULL;
     v->isIndexed = false;
-    v->read_bit = 7;
-    v->write_bit = 7;
-    v->kill_bit = 7;
+    v->i_read_bit = 1;
+    v->i_write_bit = 1;
+    v->i_kill_bit = 1;
+    v->e_read_bit = 1;
+    v->e_write_bit = 1;
+    v->e_kill_bit = 1;
+    v->from = curFileName;
     return v;
 }
 
@@ -40,7 +45,8 @@ void setVariable(Variable* v){
     Variable* prev = NULL;
     if(v->isIndexed){
         Variable* existing = getVariable(v->varName);
-        if(existing->isConstant || !existing->write_bit){
+	int perm = curFileName == existing->from ? existing->i_write_bit : existing->e_write_bit;
+        if(existing->isConstant || !perm){
                 char err[256];
                 snprintf(err,sizeof(err),"'%s' cannot be Modified (const)",existing->varName);
                 error(err,0,RUN_TIME_ERROR);
@@ -65,7 +71,8 @@ void setVariable(Variable* v){
     }
     while(current != NULL){
         if(strcmp(current->varName,v->varName) == 0){
-            if(current->isConstant || !current->write_bit){
+	    int perm = curFileName == current->from ? current->i_write_bit : current->e_write_bit;
+            if(current->isConstant || !perm){
                 char err[256];
                 snprintf(err,sizeof(err),"'%s' cannot be Modified (const)",current->varName);
                 error(err,0,RUN_TIME_ERROR);
@@ -127,7 +134,8 @@ int removeVariable(char* varName){
         Variable* current = curStack->locals[index];
         found = 0;
         if(current && strcmp(current->varName,varName) == 0){
-	    if(!current->kill_bit){
+	    int perm = curFileName == current->from ? current->i_kill_bit : current->e_kill_bit;
+	    if(!perm){
 		char errMsg[256];
 		snprintf(errMsg,sizeof(errMsg),"Kill permission denied for variable '%s'",varName);
 		error(errMsg,-1,RUN_TIME_ERROR);

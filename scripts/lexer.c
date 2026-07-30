@@ -179,6 +179,8 @@ void line_lexer(char* line,int lineCount,Stack* stk){
                     temp->type = POP;
                 }else if(strcmp(temp->data.strData,"chmod") == 0){
 		    temp->type = CHMOD;
+		}else if(strcmp(temp->data.strData,"extern") == 0){
+		    temp->type = EXTERN;
 		}
                 else{
                     temp->type = IDENTIFIER;
