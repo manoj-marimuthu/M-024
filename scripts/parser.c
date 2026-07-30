@@ -983,13 +983,13 @@ astNode* parseCallFunction(){
     return NULL;
 }
 // parse commands
-astNode* parseKill(){
+astNode* parseRM(){
     skipNewline();
-    if(current && current->type == KILL){
+    if(current && current->type == RM){
         consume();
         if(current && current->type == IDENTIFIER){
             astNode* node = createAstNode();
-            node->type = AST_KILL;
+            node->type = AST_RM;
             MemNode* strObj = createMemNode(strlen(current->data.strData) + 1);
             strcpy(strObj->ptr,current->data.strData);
             node->data.stringData = strObj->ptr;
@@ -997,7 +997,7 @@ astNode* parseKill(){
             skipNewline();
             return node;
         }else{
-            error("vkill requires a variable/function name",current->lineCount,RUN_TIME_ERROR);
+            error("rm requires a variable/function name",current->lineCount,RUN_TIME_ERROR);
         }
     }
     return NULL;
@@ -1078,7 +1078,7 @@ astNode* parseBlock(){
     else if(node->type == FUNCTION) return parseFunction();
     else if(node->type == RETURN) return parseReturn();
     else if(node->type == MOUNT) return parseMount();
-    else if(node->type == KILL) return parseKill();
+    else if(node->type == RM) return parseRM();
     else if(node->type == POP) return parsePop();
     else{
 	printf("Token type = %d",node ? node->type : -1); 

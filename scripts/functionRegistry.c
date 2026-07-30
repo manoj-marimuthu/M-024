@@ -28,7 +28,7 @@ Function* createFunction(){
     f->param_length = 0;
     f->i_read_bit = 1;
     f->i_write_bit = 1;
-    f->i_write_bit = 1;    
+    f->i_kill_bit = 1;    
     f->e_read_bit = 1;
     f->e_write_bit = 1;
     f->e_kill_bit = 1;

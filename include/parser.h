@@ -41,7 +41,7 @@ typedef enum{
     AST_FOR,
     AST_UPLUS,
     AST_UMINUS,
-    AST_KILL,
+    AST_RM,
     AST_LIST,
     AST_POP,
     AST_CHMOD
@@ -105,7 +105,7 @@ astNode* parseUnary();
 astNode* parseMulDivMod();
 astNode* parseAtom();
 astNode* parseIndex();
-astNode* parseKill();
+astNode* parseRM();
 astNode* parsePop();
 astNode* parseChmod();
 void Parser();

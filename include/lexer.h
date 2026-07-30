@@ -48,7 +48,7 @@ typedef enum {
     FOR,
     IN,
     POP,
-    KILL,
+    RM,
     CHMOD,
     EXTERN
 } LexerNodeType;
