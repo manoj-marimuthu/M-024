@@ -1004,6 +1004,36 @@ Value evaluate(astNode* node){
 	}
 	return makeNone();
     }
+   else if(node->type == AST_WHO_IS){
+	char* objToFind = node->data.stringData;
+	Variable* var = getVariableUnsafe(objToFind);
+	char final_to_return[300];
+	if(var){
+		char name_line[50],i_perm[50],e_perm[50],mem_address[50],type[20];
+		snprintf(name_line,sizeof(name_line),"name : %s \n",objToFind);
+		snprintf(i_perm,sizeof(i_perm),"internal permissions: %c%c%c\n",var->i_read_bit == 1 ? 'r': '-',var->i_write_bit == 1 ? 'w' : '-',var->i_kill_bit == 1 ? 'k' : '-');	
+		snprintf(e_perm,sizeof(e_perm),"external permissions: %c%c%c\n",var->e_read_bit == 1 ? 'r': '-',var->e_write_bit == 1 ? 'w' : '-',var->e_kill_bit == 1 ? 'k' : '-');
+		snprintf(mem_address,sizeof(mem_address),"memory location: %p\n",&var);
+		char* typeString;
+		if(var->type == D_STRING) typeString = "STRING";
+		else if(var->type == D_NUMBER) typeString = "NUMBER";
+		else if(var->type == D_BOOLEAN) typeString = "BOOLEAN";
+		else if(var->type == D_LIST) typeString = "LIST";
+		else typeString = "NONE";
+		snprintf(type,sizeof(type),"type : %s\n",typeString);
+		snprintf(final_to_return,sizeof(final_to_return),"%s%s%s%s%s",name_line,i_perm,e_perm,mem_address,type);
+	}else{
+		Function* f = getFunction(objToFind);
+		char name_line[50],i_perm[50],e_perm[50],mem_address[50];
+		snprintf(name_line,sizeof(name_line),"name : %s \n",objToFind);
+		snprintf(i_perm,sizeof(i_perm),"internal permissions: %c%c%c\n",f->i_read_bit == 1 ? 'r': '-',f->i_write_bit == 1 ? 'w' : '-',f->i_kill_bit == 1 ? 'k' : '-');	
+		snprintf(e_perm,sizeof(e_perm),"external permissions: %c%c%c\n",f->e_read_bit == 1 ? 'r': '-',f->e_write_bit == 1 ? 'w' : '-',f->e_kill_bit == 1 ? 'k' : '-');
+		snprintf(mem_address,sizeof(mem_address),"memory location: %p\n",&f);
+		snprintf(final_to_return,sizeof(final_to_return),"%s%s%s%s",name_line,i_perm,e_perm,mem_address);
+	}
+	Value toReturn = makeString(final_to_return);
+        return toReturn;	
+   }
     else if(node->type == AST_MOUNT){
         char* fileName = node->data.stringData;
         if(isAlreadyLoaded(fileName)) return makeNone();

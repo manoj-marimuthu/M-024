@@ -50,4 +50,14 @@ standard for file handling in M-024 and not built-in functions).
             # read - denied, write - denied, kill -denied (external file permissions)
         </td>
     </tr>
+    <tr>
+        <td>whois</td>
+        <td>Inspired from the ```whoami``` command, ```whois``` returns a string that contains
+        information regarding a variable or function by providing name, internal permissions,
+        external permissions, type (if it is a variable and not a function) and the memory address of it.
+        </td>
+        <td>
+            info = whois x # where 'x' is the name of the entity
+        </td>
+    </tr>
 </table>

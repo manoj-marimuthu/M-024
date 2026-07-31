@@ -44,7 +44,8 @@ typedef enum{
     AST_RM,
     AST_LIST,
     AST_POP,
-    AST_CHMOD
+    AST_CHMOD,
+    AST_WHO_IS
 } astNodeType;
 
 typedef struct astNode{
@@ -108,6 +109,7 @@ astNode* parseIndex();
 astNode* parseRM();
 astNode* parsePop();
 astNode* parseChmod();
+astNode* parseWhoIs();
 void Parser();
 
 #endif

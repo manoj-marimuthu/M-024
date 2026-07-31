@@ -59,6 +59,9 @@ astNode* parseAtom(){
     else if(current && current->type == CHMOD){
 	return parseChmod();
     }
+    else if(current && current->type == WHOIS){
+	return parseWhoIs();
+    }
     else if(current && current->type == STRING){
         astNode* node = createAstNode();
         node->type = AST_STRING;
@@ -1062,6 +1065,24 @@ astNode* parseChmod(){
 	}
 }
 
+astNode* parseWhoIs(){
+    if(current && current->type == WHOIS){
+	consume();
+	astNode* node = createAstNode();
+	node->type = AST_WHO_IS;
+	if(current && current->type == IDENTIFIER){
+	  node->data.stringData = current->data.strData;
+	  consume();
+	  skipNewline();
+	  return node;
+	}else{
+	  error("whois requires variable/function name",node->lineCount,RUN_TIME_ERROR); 
+	}
+    }else{
+	    return NULL;
+    }
+    return NULL;
+}
 astNode* parseBlock(){
     skipNewline();
     LexerNode* node = current;
@@ -1080,6 +1101,7 @@ astNode* parseBlock(){
     else if(node->type == MOUNT) return parseMount();
     else if(node->type == RM) return parseRM();
     else if(node->type == POP) return parsePop();
+    else if(node->type == WHOIS) return parseWhoIs();
     else{
 	printf("Token type = %d",node ? node->type : -1); 
         error("Undefined Statement Found While Parsing",current->lineCount,RUN_TIME_ERROR);
