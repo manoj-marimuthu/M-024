@@ -145,6 +145,9 @@ void line_lexer(char* line,int lineCount,Stack* stk){
                 else if(strcmp(temp->data.strData,"str") == 0){
                     temp->type = STR;
                 }
+		else if(strcmp(temp->data.strData,"whois") == 0){
+                    temp->type = WHOIS;
+		}
                 else if(strcmp(temp->data.strData,"len") == 0){
                     temp->type = LEN;
                 }

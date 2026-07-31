@@ -50,7 +50,8 @@ typedef enum {
     POP,
     RM,
     CHMOD,
-    EXTERN
+    EXTERN,
+    WHOIS
 } LexerNodeType;
 
 typedef struct LexerNode

@@ -1,0 +1,5 @@
+x = "I am a function"
+chmod x 010
+chmod extern x 100
+info = whois x
+print(info)
