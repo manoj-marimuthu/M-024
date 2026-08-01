@@ -344,6 +344,7 @@ print(y) = 20
         <td>non-equality check</td>
     </tr>
 </table>
+  
 ## Conditional Statements
 
 - M-024 currently supports ```if```, ```elif``` and ```else``` to
@@ -365,6 +366,7 @@ else:
 # the above snippet prints "Expected", if not
 # we are having serious problem with this feature
 ```
+
 ## Loops
 
 - Looping statements in M-024 are written using ```while```
@@ -512,6 +514,7 @@ print(x)
 onto the terminal. It does not have a object like syntax similar to
 python and is more like an include from C language than the import
 from the python language hence the name ```mount``` (a common ground).
+
 ## math.mscf
 
 - The first standard library in M-024, that holds the following functions:
@@ -586,6 +589,7 @@ from the python language hence the name ```mount``` (a common ground).
         <td>converts radians into degrees and returns it</td>
     </tr>
 </table>
+
 ## tester.mscf
 
 - The standard testing library used primarily in the test suite
