@@ -111,6 +111,7 @@ an default feature in its design.
         <td>under work</td>
     </tr>
 </table>
+
 ## type()
 
 - Used to identify an object's type
@@ -143,6 +144,7 @@ as a string with the type name in uppercase.
         <td>"LIST"</td>
     </tr>
 </table>
+
 ## IO
 
 - M-024 supports IO operations only to the terminal via the
@@ -169,6 +171,7 @@ the terminal. Only takes a single line per call.
 ```python
 input("Type Something:") # Type Something:<reads characters>
 ```
+
 ## Strings
 
 - Strings are a cool feature in M-024. Since it is interpreted
@@ -202,6 +205,7 @@ i = "Hello"
 j = i + " World" # Hello World
 k = i * 2 # HelloHello  
 ```
+
 ## List
 
 ```list``` is a new feature as of v0.4.0 and are very similar
