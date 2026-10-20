@@ -1,7 +1,10 @@
 ## M-024 Programming Language
 ### Current Version: v0.4.0 • Under Active Development
 A lightweight interpreted general purpose programming language, written in C, designed 
-for rapid scripting, testing and simplicity.
+for rapid scripting, testing and simplicity. It is written for educational purposes and not 
+for actual usage since python is a far better alternative to it and I only wrote this to
+understand the mechanisms in implementing a language and not in building a production-quality
+language.
 
 Here is an example program for the bubble sort algorithm in M-024.
 
